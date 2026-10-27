@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="A bouquet of lilies, grown from light and tiny characters. A real-time procedural ASCII artwork." />
+    <title>Lilies · an ASCII study</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Ctext x='16' y='25' fill='%23eab8cf' font-size='30' text-anchor='middle'%3E*%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <main id="stage" aria-label="An animated ASCII bouquet of twelve colourful lilies" role="img"></main>
+    <button id="replay" aria-label="Replay bouquet blooming"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>Replay</span></button>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+    <aside id="dev" hidden aria-label="Animation controls">
+      <div class="panel-heading">STUDIO <button id="close-dev" aria-label="Close controls">×</button></div>
+      <button id="pause">Pause</button>
+      <label>Timeline <output id="time-label">0.00 s</output><input id="seek" type="range" min="0" max="4.2" step="0.01" value="0" /></label>
+      <label>Glyph density <input id="density" type="range" min="0.5" max="1" step="0.05" value="1" /></label>
+      <label>Quality <select id="quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
+      <small>D to toggle · Space to pause</small>
+    </aside>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

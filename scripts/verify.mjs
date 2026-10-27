@@ -1,0 +1,66 @@
+import { chromium } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:5173';
+await mkdir('test-results', { recursive: true });
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+const errors = [];
+page.on('pageerror', e => errors.push(e.message));
+page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+await page.goto(`${base}/?t=0`);
+await page.waitForFunction(() => !!window.bouquetStudio);
+const samples = [];
+for (const [name, t] of [['early', .45], ['leaves', 1.15], ['partial', 2.7], ['full', 4.2]]) {
+  await page.evaluate(t => window.bouquetStudio.seek(t), t);
+  await page.screenshot({ path: `test-results/${name}.png` });
+  samples.push({ name, ...await page.evaluate(() => window.bouquetStudio.getState()) });
+}
+assert(samples[0].visibleGlyphs < samples[1].visibleGlyphs);
+assert(samples[1].visibleGlyphs < samples[3].visibleGlyphs);
+const full = await page.screenshot();
+await page.evaluate(() => window.bouquetStudio.seek(1));
+await page.evaluate(() => window.bouquetStudio.seek(4.2));
+assert(full.equals(await page.screenshot()), 'Seeking is deterministic');
+await page.keyboard.press('d');
+assert(await page.locator('#dev').isVisible());
+await page.selectOption('#quality', 'light');
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().quality), 'light');
+await page.locator('#density').fill('0.65');
+await page.locator('#close-dev').click();
+await page.click('#replay');
+await page.waitForTimeout(700);
+assert((await page.evaluate(() => window.bouquetStudio.getState().time)) < 2);
+await page.evaluate(() => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+  document.dispatchEvent(new Event('visibilitychange'));
+});
+const hiddenTime = await page.evaluate(() => window.bouquetStudio.getState().time);
+await page.waitForTimeout(250);
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().time), hiddenTime, 'Hidden documents pause the timeline');
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().running), false);
+await page.evaluate(() => {
+  delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+});
+await page.waitForFunction(() => window.bouquetStudio.getState().time === 4.2);
+const held = await page.evaluate(() => window.bouquetStudio.getState().renderedFrames);
+await page.waitForTimeout(350);
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().renderedFrames), held, 'No redraws after completion');
+await page.goto(`${base}/?t=4.2`);
+await page.waitForFunction(() => !!window.bouquetStudio);
+await page.setViewportSize({ width: 390, height: 844 });
+await page.screenshot({ path: 'test-results/mobile.png' });
+assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+await page.emulateMedia({ reducedMotion: 'reduce' });
+await page.goto(base);
+await page.waitForFunction(() => !!window.bouquetStudio);
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().time), 4.2);
+await page.click('#replay');
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().time), 4.2);
+assert.equal(await page.evaluate(() => window.bouquetStudio.getState().running), false);
+assert.deepEqual(errors, []);
+await writeFile('test-results/report.json', JSON.stringify({ samples, errors, checks: ['deterministic seeking', 'growth stages', 'replay', 'quality', 'density', 'visibility suspension', 'idle hold', 'mobile', 'reduced motion'] }, null, 2));
+console.log(JSON.stringify({ samples, errors, result: 'All browser checks passed' }, null, 2));
+await browser.close();
