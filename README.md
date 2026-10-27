@@ -1,44 +1,70 @@
-# ASCII lilies
+# ASCII studies
 
-A full-viewport, procedural lily bouquet built with Vite, TypeScript and PixiJS 8. No image, video, remote font, backend, or account is used for the artwork.
+A real-time ASCII artwork built with Vite, TypeScript and PixiJS 8. It contains three scenes: a moving knight (the default), a procedural bouquet of lilies, and the knight standing among lilies. The artwork runs locally in the browser; it uses no backend, remote fonts, or account.
 
 ## Run
 
-Requires Node.js 22.12+ (tested with 22.14).
+Requires Node.js 22.12 or newer.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. To create and serve the production bundle:
+Open http://127.0.0.1:5173. Build and serve the production bundle with:
 
 ```sh
 npm run build
 npm run preview
 ```
 
-The static production site is in `dist/`.
+The static production site is written to `dist/`.
 
-## Controls
+## Scenes and controls
 
-- **Replay** restarts the 4.2-second bloom. With reduced motion enabled it keeps the completed bouquet visible.
-- **D** opens the hidden studio panel; **Space** pauses/resumes while the panel is open.
-- The panel includes timeline seeking, glyph density, and fine/light quality.
-- `?debug` opens the panel; `?t=2.7` opens a paused timeline frame; `?quality=light` starts at lower logical resolution.
+- **Knight** is the default scene. Its ASCII rendering has a moving crimson scarf and grass.
+- **Lilies** is an animated, 4.2-second bloom. **Restart** replays it; with reduced motion enabled, the completed bouquet remains visible.
+- **Knight in lilies** combines the knight with the flower bed.
+- The scene selector is in the upper-right corner. The unobtrusive controls at the bottom pause/resume animation, restart it, and choose fine or light rendering quality.
+- Press **D** to toggle the hidden studio panel. **Space** pauses or resumes while focus is not in a form control. The panel offers a timeline, glyph density and size, character spacing, quality, and scene-specific appearance settings.
+- Animation suspends while the document is hidden. The application also respects reduced-motion preferences.
+
+## URL parameters and settings
+
+- `?scene=knight`, `?scene=lilies`, or `?scene=garden` selects a scene (`garden` is labelled “Knight in lilies” in the UI).
+- `?t=2.7` opens a scene at a timeline position in seconds.
+- `?quality=light` starts at light rendering quality.
+- `?debug` opens the studio panel.
+
+An explicitly supplied `scene` takes precedence; otherwise, the app remembers the last selected scene locally. Core visual and animation settings are in `src/config.ts`.
 
 ## Rendering
 
-`src/bouquet.ts` defines a deterministic arrangement of twelve six-petal lilies. Parametric petals unfold by changing their spread, exposed length, twist and backward curl. Folded lanceolate leaves and curved stems use independent growth delays. A fixed orthographic camera projects these surfaces into a reusable CPU depth buffer. Triangles are rasterized at character-cell centres, interpolating surface colours and resolving individual petal/leaf intersections. Two-sided lighting, throat shading, veins and seeded markings give the petals depth. Filaments and pollen are depth-tested too.
+No raster artwork is used. The knight is modelled procedurally in `src/knight-sdf.ts` as signed-distance armour (great helm with eye slits and breaths, laminated pauldrons and fauld, rivets, mail skirt, surcoat, tattered cloak, sword) and ray-marched once at start-up on a throwaway WebGL2 context into a cached 800×1000 source canvas. Each frame only the crimson scarf (two ribbon tails plus the neck wrap, `src/knight.ts`) is redrawn on top of that cache.
 
-`src/main.ts` generates one small monospaced glyph atlas, preallocates a sprite pool, and submits occupied cells to PixiJS's sprite batcher. The grid uses non-square character cells and the entire artwork scales uniformly. Noise is anchored to grid coordinates. Animation uses elapsed time; it suspends while the document is hidden and stops scheduling frames after completion. Resizing redraws the retained scene. Reduced-motion changes are observed live.
+A PixiJS mesh shader (`src/ascii-filter.ts`) converts the source to a stable character grid. Its glyph atlas holds a blank cell, the ramp `. , : ; - = + * # % @`, and six grass glyphs `. , ' / \ |`. Glyph positions and per-cell noise are anchored to scene coordinates, so armour characters never shimmer; output glyphs keep the source colours.
 
-Fine quality uses 2.5 × 4 world-unit cells; light quality uses 3.5 × 5.6. Geometry and composition stay the same. The studio density slider deliberately removes a stable subset of glyphs for inspection.
+Grass (`src/grass.ts`) is simulated directly on the same cell grid: seeded blades bend under travelling wind gusts and each cell picks a glyph from the blade's local slope. The grid is uploaded as a small nearest-filtered texture every frame; front blades overlap the knight's feet.
 
-PixiJS APIs were checked against the installed version's official [Texture](https://pixijs.download/v8.22.0/docs/rendering.Texture.html), [Sprite](https://pixijs.download/v8.22.0/docs/scene.Sprite.html), and [Application](https://pixijs.com/8.x/guides/components/application) documentation.
+The lilies scene is drawn from procedural geometry to a reusable CPU depth buffer, then submitted to PixiJS with a preallocated sprite pool. Fine and light quality change the logical cell size without changing the composition.
 
-## Browser verification
+## Scripts and verification
 
-With the dev server running, `npm run verify` uses locally installed Chrome through Playwright. Set `PREVIEW_URL` to test a different server. It saves early-growth, leaf, partial-bloom, full-bloom and mobile screenshots in `test-results/` and verifies deterministic seeking, replay, idle hold, developer controls, quality, reduced motion and browser errors. Screenshots are verification artifacts, not application assets.
+- `npm run dev` — start the Vite development server.
+- `npm run build` — run TypeScript checking and create a Vite production build.
+- `npm run preview` — serve the production build locally.
+- `npm run verify` — run browser checks with Playwright Chromium and SwiftShader. The Vite server must already be running; set `PREVIEW_URL` to verify another local server. Checks cover the default and switched scenes, rendered WebGL output, playback controls, restart, quality, the hidden panel, reduced motion, hidden-document suspension, mobile overflow, and browser/program errors.
 
-The video referenced in the brief was not available in the supplied conversation or workspace. This arrangement follows the written composition and timing; exact flower positions, petal silhouettes, texture and frame timing have not been compared to the original video.
+Verification screenshots and the JSON report are saved to `/tmp/verify/`, not the repository. `node scripts/capture.mjs` captures desktop scenes and a mobile view to the same directory.
+
+## Reference comparison
+
+The knight was compared frame by frame against the supplied 12-second screen recording of an ASCII knight (laptop, browser chrome and caption excluded).
+
+Matched: black stage; bowed great helm high in the centre; upright sword in the left third with pommel, grip, crossguard and the gauntlet closed on the grip; layered off-white armour separated by black recesses; crimson scarf leaving the neck and streaming right, with displacement growing toward the free ends; sparse, dark olive grass moving more slowly than the scarf; stationary armour, sword and camera.
+
+Remaining differences:
+- The pose is a kneeling knight, a little more upright and less compact than the reference's hunched crouch.
+- Limbs are built from rounded primitives, so the armour reads cleaner and more geometric than the painted reference.
+- The scarf is a shaded 2D ribbon rather than simulated cloth, and there is no bloom glow.
+- The reference is a phone recording of a laptop screen, so colour and glyph-size comparison is approximate.
