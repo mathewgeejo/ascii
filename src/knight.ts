@@ -1,42 +1,23 @@
-import knightUrl from './knight-art.svg?url';
-import { hash, WIDTH, HEIGHT, type Bouquet } from './bouquet';
+import { bakeKnight } from './knight-sdf';
+import { WIDTH, HEIGHT, type Bouquet } from './bouquet';
 import { createGarden } from './garden';
 import type { Quality, Settings } from './config';
 
 const canvas = () => { const c = document.createElement('canvas'); c.width = WIDTH; c.height = HEIGHT; return c; };
-interface Grass { x: number; y: number; h: number; lean: number; phase: number; front: boolean; shade: number }
-
-/** Source illustration is cached; only cloth and sparse grass are drawn each frame. */
+/** Source illustration is cached; only cloth is drawn each frame. */
 export class Knight {
   readonly canvas = canvas();
   private ctx = this.canvas.getContext('2d')!;
   private armour = canvas();
   private rearBed = canvas();
   private frontBed = canvas();
-  private grass: Grass[] = Array.from({ length: 330 }, (_, i) => ({
-    x: 97 + hash(i + 120) * 612, y: 875 + hash(i + 300) * 65,
-    h: 15 + Math.pow(hash(i + 700), 2) * 113,
-    lean: (hash(i + 80) - .3) * 42, phase: hash(i + 11) * Math.PI * 2,
-    front: i % 3 === 0, shade: 20 + hash(i + 444) * 37,
-  }));
   private ribbon = new Float32Array(73 * 5 * 3);
   private quality: Quality = 'fine';
   private glyphSize = 1;
   private gardenReady = false;
 
   async init() {
-    const image = new Image(); image.src = knightUrl;
-    await image.decode();
-    const ctx = this.armour.getContext('2d')!;
-    ctx.drawImage(image, 0, 0);
-    // Seeded wear is generated once and clipped to opaque armour, never the backdrop.
-    ctx.save(); ctx.globalCompositeOperation = 'source-atop';
-    for (let i = 0; i < 14500; i++) {
-      const x = 170 + hash(i + 177) * 410, y = 140 + hash(i + 551) * 741;
-      ctx.fillStyle = i % 3 ? 'rgba(8,12,8,.21)' : 'rgba(235,230,205,.13)';
-      ctx.fillRect(x, y, .6 + hash(i + 33) * 1.7, .65);
-    }
-    ctx.restore();
+    bakeKnight(this.armour.getContext('2d')!);
   }
 
   configureGarden(quality: Quality, glyphSize: number) {
@@ -63,69 +44,66 @@ export class Knight {
     dest.drawImage(small, 0, 0, bed.cols * bed.cellX, bed.rows * bed.cellY);
   }
 
-  private drawGrass(time: number, front: boolean, movement: number) {
-    const ctx = this.ctx;
-    ctx.lineWidth = 1.15;
-    for (let i = 0; i < this.grass.length; i++) {
-      const blade = this.grass[i];
-      if (blade.front !== front) continue;
-      const sway = movement * (Math.sin(time * .64 + blade.phase) * 4 + Math.sin(time * 1.13 + blade.x * .012) * 1.8);
-      const b = blade.shade;
-      ctx.strokeStyle = `rgb(${b * .82},${b},${b * .69})`;
-      ctx.beginPath(); ctx.moveTo(blade.x, blade.y);
-      ctx.quadraticCurveTo(blade.x + blade.lean * .25, blade.y - blade.h * .65,
-        blade.x + blade.lean + sway * blade.h / 95, blade.y - blade.h);
-      ctx.stroke();
-    }
-  }
-
+  /** One free scarf tail: displacement grows toward the loose end, the root stays pinned at the knot. */
   private scarf(time: number, secondary: boolean, amplitude: number) {
     const rows = 72, columns = 4, ctx = this.ctx;
-    const length = secondary ? 238 : 302;
+    const length = secondary ? 228 : 242;
     const phase = secondary ? 1.9 : 0;
+    const rootX = secondary ? 536 : 526, rootY = secondary ? 352 : 334;
+    const rise = secondary ? -12 : -100;
     for (let row = 0; row <= rows; row++) {
-      const u = row / rows, env = Math.pow(u, 1.45);
-      const wave = Math.sin(u * 8.6 - time * 2.25 + phase) * 17 + Math.sin(u * 17.4 - time * 3.65 + phase) * 5;
-      const gust = Math.sin(time * .73 + u * 4 + phase) * 6;
-      const centerX = 452 + length * u;
-      const centerY = (secondary ? 323 : 311) + (secondary ? 62 : -54) * u + amplitude * env * (wave + gust);
-      const twist = .7 + .3 * Math.cos(u * 10.8 - time * 2.1 + phase);
-      const width = (secondary ? 16 : 23) * (1 - .68 * u) * twist + 1.8;
+      const u = row / rows, env = Math.pow(u, 1.35);
+      const wave = Math.sin(u * 7.2 - time * 2.4 + phase) * 19 + Math.sin(u * 15.8 - time * 3.9 + phase) * 6;
+      const gust = Math.sin(time * .71 + u * 3.4 + phase) * 9;
+      const centerX = rootX + length * u - env * Math.abs(gust) * .8;
+      const centerY = rootY + rise * u * (1 - .25 * u) + amplitude * env * (wave + gust);
+      const twist = .62 + .38 * Math.cos(u * 9.6 - time * 2.2 + phase);
+      const fray = 1 - .6 * Math.max(0, (u - .78) / .22);
+      const width = ((secondary ? 17 : 25) * (1 + .45 * u) * twist + 4) * fray;
       for (let col = 0; col <= columns; col++) {
         const q = col / columns * 2 - 1, p = (row * 5 + col) * 3;
-        this.ribbon[p] = centerX + q * Math.sin(u * 6 - time * 1.7) * 3.5 * env;
+        this.ribbon[p] = centerX + q * Math.sin(u * 6 - time * 1.7) * 4 * env;
         this.ribbon[p + 1] = centerY + q * width;
-        this.ribbon[p + 2] = .46 + .3 * Math.cos(q * 2.6 + u * 14 - time * 2.2 + phase) + .16 * Math.sin(u * 24 - time * 3.1 + phase);
+        this.ribbon[p + 2] = .5 + .32 * Math.cos(q * 2.4 + u * 13 - time * 2.3 + phase) * twist + .14 * Math.sin(u * 23 - time * 3.2 + phase) - (secondary ? .14 : 0);
       }
     }
     for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
       const a = (row * 5 + col) * 3, b = a + 15, c = b + 3, d = a + 3;
-      const shade = Math.max(.15, this.ribbon[a + 2]);
-      ctx.fillStyle = `rgb(${Math.round(105 + shade * 150)},${Math.round(4 + shade * 20)},${Math.round(20 + shade * 34)})`;
+      const shade = Math.max(.12, Math.min(1, this.ribbon[a + 2]));
+      ctx.fillStyle = `rgb(${Math.round(92 + shade * 150)},${Math.round(4 + shade * 16)},${Math.round(14 + shade * 24)})`;
       ctx.beginPath(); ctx.moveTo(this.ribbon[a], this.ribbon[a + 1]);
       ctx.lineTo(this.ribbon[b], this.ribbon[b + 1]); ctx.lineTo(this.ribbon[c], this.ribbon[c + 1]);
       ctx.lineTo(this.ribbon[d], this.ribbon[d + 1]); ctx.closePath(); ctx.fill();
     }
-    // Irregular split edge rather than a perfectly rectangular ribbon end.
-    const p = rows * 15;
-    ctx.fillStyle = '#000'; ctx.beginPath();
-    ctx.moveTo(this.ribbon[p] - 8, this.ribbon[p + 7]);
-    ctx.lineTo(this.ribbon[p + 6] + 4, this.ribbon[p + 7] - 3);
-    ctx.lineTo(this.ribbon[p + 12] + 2, this.ribbon[p + 13] + 2); ctx.fill();
+  }
+
+  /** Wrap around the throat, in front of helm and tail roots so the attachment never shows a seam. */
+  /** Wrap around the gorget, drawn over helm rim and tail roots so the attachment never shows a seam. */
+  /** Wrap around the gorget, drawn over helm rim and tail roots so the attachment never shows a seam. */
+  /** Wrap around the gorget, drawn over helm rim and tail roots so the attachment never shows a seam. */
+  private scarfWrap(time: number, amplitude: number) {
+    const ctx = this.ctx, lift = Math.sin(time * 1.3) * 1.2 * amplitude;
+    const band = ctx.createLinearGradient(420, 320, 545, 362);
+    band.addColorStop(0, '#6e0912'); band.addColorStop(.4, '#cc182b'); band.addColorStop(.75, '#9c0f1d'); band.addColorStop(1, '#52060e');
+    ctx.fillStyle = band; ctx.beginPath();
+    ctx.moveTo(422, 330); ctx.quadraticCurveTo(480, 318 + lift, 540, 322);
+    ctx.lineTo(548, 352); ctx.quadraticCurveTo(484, 360 + lift, 428, 358); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#360408'; ctx.lineWidth = 2.5; ctx.beginPath();
+    ctx.moveTo(430, 345); ctx.quadraticCurveTo(484, 336 + lift, 542, 337); ctx.stroke();
+    ctx.fillStyle = '#b51424'; ctx.beginPath(); ctx.ellipse(528, 337 + lift, 16, 13, -.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#640910'; ctx.beginPath(); ctx.ellipse(532, 340 + lift, 6, 5, -.3, 0, Math.PI * 2); ctx.fill();
   }
 
   render(time: number, garden: boolean, settings: Settings) {
     const ctx = this.ctx;
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    this.drawGrass(time, false, settings.grassMotion);
     if (garden) ctx.drawImage(this.rearBed, 0, 0);
-    this.scarf(time * settings.scarfSpeed, false, settings.scarfAmplitude);
+    const scarfTime = time * settings.scarfSpeed;
+    // Lower tail passes behind the rear pauldron; the main tail and the wrap sit in front.
+    this.scarf(scarfTime, true, settings.scarfAmplitude);
     ctx.drawImage(this.armour, 0, 0);
-    // The lower free strip is in front of the rear shoulder, with a fixed neck anchor.
-    this.scarf(time * settings.scarfSpeed, true, settings.scarfAmplitude);
-    // Restore the neck/helmet boundary from the cached illustration to protect overlap.
-    ctx.drawImage(this.armour, 330, 140, 150, 205, 330, 140, 150, 205);
-    this.drawGrass(time, true, settings.grassMotion);
+    this.scarf(scarfTime, false, settings.scarfAmplitude);
+    this.scarfWrap(scarfTime, settings.scarfAmplitude);
     if (garden) ctx.drawImage(this.frontBed, 0, 0);
   }
 }

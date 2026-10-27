@@ -1,7 +1,8 @@
 import { Application, Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { Bouquet, WIDTH, HEIGHT, DURATION } from './bouquet';
 import { Knight } from './knight';
-import { createAsciiFilter } from './ascii-filter';
+import { createAsciiRenderer } from './ascii-filter';
+import { Meadow } from './grass';
 import { CONFIG, type Quality, type Scene } from './config';
 import './style.css';
 
@@ -12,8 +13,8 @@ const app = new Application();
 const artwork = new Container();
 const lilyLayer = new Container();
 const knight = new Knight();
+const meadow = new Meadow();
 const settings = { ...CONFIG };
-const ascii = createAsciiFilter();
 const scenes: Scene[] = ['lilies', 'knight', 'garden'];
 let savedScene: string | null = null;
 try { savedScene = localStorage.getItem('ascii-scene'); } catch { /* Storage is optional. */ }
@@ -23,7 +24,8 @@ let quality: Quality = params.get('quality') === 'light' ? 'light' : 'fine';
 let bouquet = new Bouquet(quality);
 const sprites: Sprite[] = [];
 let visibleGlyphs = 0;
-let knightSprite: Sprite;
+let ascii!: ReturnType<typeof createAsciiRenderer>;
+let knightSprite: ReturnType<typeof createAsciiRenderer>['mesh'];
 let time = scene === 'lilies' && reducedMotion.matches ? DURATION : 0;
 const clocks: Record<Scene, number> = { lilies: reducedMotion.matches ? DURATION : 0, knight: 0, garden: 0 };
 let paused = false;
@@ -32,7 +34,6 @@ let request = 0;
 let renderedFrames = 0;
 let lastUiUpdate = -1;
 let ready = false;
-const sourceFilter = [ascii.filter];
 
 function makeLilyAtlas() {
   const chars = '.,:;-+=*oO', canvas = document.createElement('canvas');
@@ -89,7 +90,11 @@ function updateUI(force = false) {
 
 function draw() {
   if (scene === 'lilies') drawLilies();
-  else { knight.render(time, scene === 'garden', settings); knightSprite.texture.source.update(); }
+  else {
+    meadow.update(time, settings.grassMotion);
+    knight.render(time, scene === 'garden', settings);
+    knightSprite.texture.source.update();
+  }
   app.render(); renderedFrames++; updateUI();
 }
 
@@ -124,8 +129,11 @@ function resize() {
   if (!ready) return;
   app.renderer.resize(innerWidth, innerHeight);
   const scale = Math.min((innerWidth - 24) / WIDTH, (innerHeight - 96) / HEIGHT) * settings.scale;
+  const x = (innerWidth - WIDTH * scale) / 2;
+  const y = (innerHeight - HEIGHT * scale) / 2 + 2;
   artwork.scale.set(scale);
-  artwork.position.set((innerWidth - WIDTH * scale) / 2, (innerHeight - HEIGHT * scale) / 2 + 2);
+  artwork.position.set(x, y);
+  ascii.resize(innerWidth, innerHeight, x, y, WIDTH * scale, HEIGHT * scale);
   app.render();
 }
 
@@ -155,20 +163,27 @@ function setScene(next: Scene, remember = true) {
 function configureQuality() {
   bouquet = new Bouquet(quality, undefined, settings.glyphSize);
   for (const sprite of sprites) sprite.visible = false;
-  ensurePool(); ascii.configure(settings, quality);
+  ensurePool(); configureAscii();
   if (scene === 'garden') knight.configureGarden(quality, settings.glyphSize);
   $<HTMLSelectElement>('#quality').value = quality; $<HTMLSelectElement>('#quick-quality').value = quality;
   draw();
+}
+
+function configureAscii() {
+  const { cellX, cellY } = ascii.configure(settings, quality);
+  const grid = meadow.configure(cellX, cellY);
+  ascii.setGrass(grid.source, grid.cols, grid.rows);
 }
 
 async function init() {
   await app.init({ background: '#000000', width: innerWidth, height: innerHeight, antialias: false,
     resolution: Math.min(devicePixelRatio, 2), autoDensity: true, autoStart: false, preference: 'webgl' });
   await knight.init();
-  knightSprite = new Sprite(Texture.from(knight.canvas)); knightSprite.eventMode = 'none'; knightSprite.filters = sourceFilter;
-  artwork.addChild(lilyLayer, knightSprite); app.stage.addChild(artwork);
+  const grid = meadow.configure(4.2, 7);
+  knightSprite = (ascii = createAsciiRenderer(Texture.from(knight.canvas), grid.source, grid.cols, grid.rows)).mesh;
+  artwork.addChild(lilyLayer); app.stage.addChild(artwork, knightSprite);
   $('#stage').appendChild(app.canvas); app.canvas.setAttribute('aria-hidden', 'true');
-  ready = true; ensurePool(); ascii.configure(settings, quality); resize(); setScene(scene, false);
+  ready = true; ensurePool(); configureAscii(); resize(); setScene(scene, false);
   $('#scene').addEventListener('change', e => setScene((e.target as HTMLSelectElement).value as Scene));
   $('#replay').addEventListener('click', replay); $('#pause').addEventListener('click', togglePause);
   $('#playback').addEventListener('click', togglePause);
@@ -182,11 +197,11 @@ async function init() {
     ['gamma', 'gamma'], ['scarf-speed', 'scarfSpeed'], ['scarf-amplitude', 'scarfAmplitude'], ['grass', 'grassMotion'],
   ] as const) $("#" + id).addEventListener('input', e => {
     settings[key] = Number((e.target as HTMLInputElement).value);
-    if (key === 'glyphSize') configureQuality(); else { ascii.configure(settings, quality); draw(); }
+    if (key === 'glyphSize') configureQuality(); else { configureAscii(); draw(); }
   });
   $('#source').addEventListener('change', e => {
     settings.source = (e.target as HTMLInputElement).checked;
-    knightSprite.filters = settings.source ? null : sourceFilter; draw();
+    configureAscii(); draw();
   });
   $('#close-dev').addEventListener('click', () => { $('#dev').hidden = true; });
   document.addEventListener('keydown', event => {

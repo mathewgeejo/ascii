@@ -1,24 +1,31 @@
 import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
-const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:5173';
+const output = '/tmp/verify';
+const browser = await chromium.launch({
+  headless: true,
+  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+});
 try {
-  await mkdir('test-results', { recursive: true });
+  await mkdir(output, { recursive: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 });
-  page.on('pageerror', e => console.error(e));
-  page.on('console', m => { if (m.type() === 'error') console.error(m.text()); });
-  for (const scene of ['knight', 'garden', 'lilies']) {
-    await page.goto(`http://127.0.0.1:5173/?scene=${scene}&t=4.2`);
-    await page.waitForFunction(() => !!window.artworkStudio);
-    await page.screenshot({ path: `test-results/${scene}-desktop.png` });
-    if (scene === 'knight') {
-      await page.keyboard.press('d'); await page.locator('#source').check();
-      await page.locator('#close-dev').click();
-      await page.screenshot({ path: 'test-results/knight-source.png' });
-    }
+  const mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const errors = [];
+  for (const target of [page, mobilePage]) {
+    target.on('pageerror', error => errors.push(error.message));
+    target.on('console', message => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
   }
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.selectOption('#scene', 'garden');
-  await page.evaluate(() => window.artworkStudio.seek(4.2));
-  await page.screenshot({ path: 'test-results/garden-mobile.png' });
-  console.log('Captured three scenes, source illustration and mobile layout.');
+  for (const scene of ['knight', 'lilies', 'garden']) {
+    const time = scene === 'lilies' ? 4.2 : 2;
+    await page.goto(`${base}/?scene=${scene}&t=${time}`);
+    await page.waitForFunction(() => !!window.artworkStudio);
+    await page.screenshot({ path: `${output}/${scene}-desktop.png` });
+  }
+  await mobilePage.goto(`${base}/?scene=lilies&t=4.2`);
+  await mobilePage.waitForFunction(() => !!window.artworkStudio);
+  await mobilePage.screenshot({ path: `${output}/lilies-mobile.png` });
+  if (errors.length) throw new Error(`Browser errors:\n${errors.join('\n')}`);
+  console.log(`Captured three scenes and mobile layout in ${output}.`);
 } finally { await browser.close(); }
