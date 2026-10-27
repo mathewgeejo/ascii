@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2=".6" gradientUnits="objectBoundingBox">
+      <stop stop-color="#eee8d4"/><stop offset=".23" stop-color="#bcb9aa"/><stop offset=".49" stop-color="#777971"/><stop offset=".78" stop-color="#3d403c"/><stop offset="1" stop-color="#131715"/>
+    </linearGradient>
+    <linearGradient id="bright" x1="0" y1="0" x2=".85" y2="1">
+      <stop stop-color="#f6efdb"/><stop offset=".3" stop-color="#d8d2c0"/><stop offset=".57" stop-color="#8d8d80"/><stop offset=".79" stop-color="#4b4f47"/><stop offset="1" stop-color="#1b201c"/>
+    </linearGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2=".35">
+      <stop stop-color="#85867a"/><stop offset=".35" stop-color="#555b52"/><stop offset=".8" stop-color="#222923"/><stop offset="1" stop-color="#0c100d"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#3e443e"/><stop offset=".23" stop-color="#b0b4a2"/><stop offset=".47" stop-color="#f1eada"/><stop offset=".52" stop-color="#747a6d"/><stop offset="1" stop-color="#323a32"/>
+    </linearGradient>
+    <radialGradient id="dome" cx=".32" cy=".21" r=".8">
+      <stop stop-color="#f1ead8"/><stop offset=".28" stop-color="#bcbbae"/><stop offset=".56" stop-color="#898e82"/><stop offset=".85" stop-color="#3a4138"/><stop offset="1" stop-color="#171e18"/>
+    </radialGradient>
+    <linearGradient id="chest" x1="0" y1=".1" x2=".85" y2=".9">
+      <stop stop-color="#d8d5c2"/><stop offset=".3" stop-color="#a5a99a"/><stop offset=".49" stop-color="#d1cdb9"/><stop offset=".55" stop-color="#8e9585"/><stop offset=".8" stop-color="#4b5547"/><stop offset="1" stop-color="#1a231b"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2=".7" y2="1">
+      <stop stop-color="#d92639"/><stop offset=".4" stop-color="#9d1026"/><stop offset=".75" stop-color="#570918"/><stop offset="1" stop-color="#24050d"/>
+    </linearGradient>
+  </defs>
+  <!-- Silhouette recesses: black is deliberately left between articulated parts. -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <!-- Rear grounded thigh, folded shin, and long sabaton. -->
+    <path d="M409 575 Q374 613 338 685 L317 746 Q318 788 358 807 L476 849 547 855 569 847 Q547 817 494 803 L403 750 437 654Z" fill="#121812"/>
+    <path d="M409 594 Q369 628 342 688 L334 720 365 738 Q390 718 410 690 L444 625Z" fill="url(#side)" stroke="#070b08" stroke-width="5"/>
+    <path d="M398 617 Q371 655 349 705 L354 718 Q379 686 416 658" fill="none" stroke="#9eaa8e" stroke-width="2"/>
+    <path d="M337 723 Q311 733 316 760 Q324 786 353 792 L383 765 366 735Z" fill="url(#plate)" stroke="#080d08" stroke-width="5"/>
+    <path d="M330 738 Q339 722 359 740 L370 758 354 779 Q331 778 327 762Z" fill="url(#bright)"/>
+    <path d="M360 786 Q414 788 467 817 L496 841 Q435 845 375 809Z" fill="url(#side)" stroke="#090e09" stroke-width="4"/>
+    <path d="M369 791 L435 814 473 835" fill="none" stroke="#9a9f8b" stroke-width="2"/>
+    <path d="M469 818 Q516 817 549 837 L570 850 Q530 865 484 850Z" fill="url(#plate)" stroke="#090e09" stroke-width="4"/>
+    <path d="M491 823 L497 849 M506 826 L513 853 M522 829 L531 852 M539 836 L547 850" fill="none" stroke="#1b241a" stroke-width="3"/>
+    <!-- Surcoat shadows hanging between the legs. -->
+    <path d="M418 562 Q390 626 405 730 L430 794 464 766 Q442 687 475 600Z" fill="#111712"/>
+    <path d="M421 603 Q417 674 440 737 M440 598 Q437 661 452 695" fill="none" stroke="#343a30" stroke-width="3"/>
+    <!-- Foreground cuisse: raised knee, then vertical shin. -->
+    <path d="M450 583 Q505 584 545 621 Q568 650 558 683 L513 706 Q485 666 438 647 L420 611Z" fill="url(#plate)" stroke="#080c08" stroke-width="6"/>
+    <path d="M449 605 Q488 605 527 636 L539 657 Q489 641 449 630" fill="url(#bright)"/>
+    <path d="M449 638 Q487 645 517 674" fill="none" stroke="#c0c0ab" stroke-width="2"/>
+    <path d="M517 668 Q538 648 559 669 L566 693 Q556 718 532 725 L507 703Z" fill="url(#dome)" stroke="#080d08" stroke-width="5"/>
+    <path d="M523 678 Q539 661 551 678 L553 694 531 712 518 699Z" fill="url(#bright)"/>
+    <path d="M557 687 L578 697 556 715 545 710" fill="url(#side)" stroke="#10160f" stroke-width="2"/>
+    <path d="M514 713 L545 728 Q538 781 513 842 L480 845 Q500 787 499 748Z" fill="url(#plate)" stroke="#080d08" stroke-width="5"/>
+    <path d="M521 729 Q525 773 497 835 L509 821 Q534 769 535 733Z" fill="#a4a994"/>
+    <path d="M505 749 L535 754 M500 766 L530 772 M496 787 L522 793" fill="none" stroke="#262e24" stroke-width="3"/>
+    <path d="M479 833 Q500 828 515 844 L509 862 Q481 879 412 873 L391 864 Q410 852 459 847Z" fill="url(#plate)" stroke="#070c07" stroke-width="5"/>
+    <path d="M411 855 L414 870 M429 851 L434 873 M451 846 L459 870 M472 838 L483 864 M492 839 L501 858" fill="none" stroke="#222b20" stroke-width="3"/>
+    <path d="M402 861 Q438 876 499 860" fill="none" stroke="#b3b69e" stroke-width="1.5"/>
+    <!-- Padded arming doublet under the plates. -->
+    <path d="M365 332 Q417 304 472 337 L513 445 476 564 422 604 360 554 342 438Z" fill="#151a16"/>
+    <path d="M360 367 Q391 352 429 360 L465 526 433 573 362 529Z" fill="#2a3028"/>
+    <g fill="none" stroke="#555b4d" stroke-width="1.5" opacity=".65">
+      <path d="M361 396 L393 417 M354 411 L388 433 M354 428 L383 449 M358 445 L383 465 M362 464 L386 480 M367 482 L393 497 M373 500 L399 513"/>
+      <path d="M478 393 L493 412 M482 410 L501 432 M485 429 L503 449 M484 450 L500 468 M479 470 L493 485"/>
+    </g>
+    <!-- Back-side arm. -->
+    <path d="M506 367 Q538 413 544 470 L525 509 498 485 481 407Z" fill="url(#side)" stroke="#060b07" stroke-width="6"/>
+    <path d="M513 399 Q533 424 535 463 L523 479 509 445Z" fill="url(#plate)"/>
+    <path d="M518 477 Q535 472 546 492 L539 515 520 524 505 507Z" fill="url(#dome)" stroke="#080e09" stroke-width="4"/>
+    <path d="M523 520 L539 525 Q527 559 509 585 L485 572 Q497 541 505 519Z" fill="url(#plate)" stroke="#080d08" stroke-width="5"/>
+    <path d="M526 529 L506 572" stroke="#c3c2ac" stroke-width="2"/>
+    <!-- Breastplate. An off-centre ridge follows the leaning torso. -->
+    <path d="M365 345 Q407 326 460 348 Q484 380 485 436 Q476 481 454 508 L384 499 Q365 461 353 410Z" fill="url(#chest)" stroke="#080d09" stroke-width="6"/>
+    <path d="M369 358 Q393 342 428 348 Q400 380 398 421 L418 484 390 484 Q366 437 365 393Z" fill="url(#bright)" opacity=".74"/>
+    <path d="M430 350 Q417 392 421 426 L450 486 435 497 Q411 455 407 428 Q408 377 430 350Z" fill="#c4c8b4" opacity=".5"/>
+    <path d="M429 354 Q415 395 419 428 L448 488" fill="none" stroke="#e2deca" stroke-width="2.1"/>
+    <path d="M362 391 Q384 412 400 416 M430 420 Q456 409 477 383" fill="none" stroke="#5b6355" stroke-width="2"/>
+    <path d="M384 488 Q421 508 460 492" fill="none" stroke="#c5c7af" stroke-width="2.3"/>
+    <!-- Waist lames, each independently overlapping. -->
+    <path d="M380 495 Q418 511 461 502 L470 525 Q421 543 384 520Z" fill="url(#plate)" stroke="#0b110b" stroke-width="4"/>
+    <path d="M386 520 Q429 539 469 525 L475 547 Q432 564 392 542Z" fill="url(#plate)" stroke="#0b110b" stroke-width="4"/>
+    <path d="M391 544 Q433 561 473 549 L482 574 Q434 591 395 566Z" fill="url(#plate)" stroke="#0b110b" stroke-width="4"/>
+    <path d="M397 566 Q437 586 481 574 L482 592 437 610 398 593Z" fill="url(#side)" stroke="#0a0f0a" stroke-width="4"/>
+    <path d="M399 573 Q436 591 480 581" fill="none" stroke="#babda5" stroke-width="2"/>
+    <!-- Leather belt and clasp. -->
+    <path d="M394 549 Q436 572 479 555 L479 566 Q437 586 397 561Z" fill="#262b1f" stroke="#080d08" stroke-width="2"/>
+    <path d="M429 564 L445 567 446 580 431 577Z" fill="none" stroke="#9e9b78" stroke-width="3"/>
+    <!-- Layered tassets fan over the upper thighs. -->
+    <path d="M399 585 L433 602 421 640 378 628Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M392 604 L428 620 418 650 373 642Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M386 627 L422 640 411 670 366 655Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M448 599 L480 589 501 623 461 638Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M455 620 L492 609 511 641 468 654Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M465 641 L504 627 520 654 477 674Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <!-- Raised sword-side upper arm and elbow, with a readable inner black gap. -->
+    <path d="M333 372 Q318 404 292 432 L295 462 Q322 468 338 441 L362 393Z" fill="url(#plate)" stroke="#070c08" stroke-width="6"/>
+    <path d="M329 388 L308 435 304 449" fill="none" stroke="#c3c4af" stroke-width="3"/>
+    <path d="M285 432 Q311 431 320 452 L310 473 284 480 268 462Z" fill="url(#dome)" stroke="#080e09" stroke-width="5"/>
+    <path d="M283 445 Q300 437 308 453 L301 468 283 468 276 456Z" fill="url(#bright)"/>
+    <!-- Forearm angles up toward the hilt. -->
+    <path d="M270 444 Q255 406 243 357 L265 340 Q291 385 300 432 L292 447Z" fill="url(#plate)" stroke="#080d08" stroke-width="5"/>
+    <path d="M249 362 Q268 384 282 433 L272 430 Q255 391 249 362Z" fill="#c1c2ac"/>
+    <path d="M250 381 L274 371 M257 401 L284 389 M265 422 L292 409" fill="none" stroke="#3d4738" stroke-width="3"/>
+    <!-- Sword: pommel, leather grip, guard, long pointed blade. -->
+    <path d="M217 369 L235 370 234 850 224 900 215 851Z" fill="url(#steel)" stroke="#1b231c" stroke-width="1.5"/>
+    <path d="M225 385 L224 873" fill="none" stroke="#dddcc8" stroke-width="1.3"/>
+    <path d="M230 385 L229 854 224 886" fill="none" stroke="#464f42" stroke-width="2"/>
+    <path d="M218 253 L233 253 234 355 216 355Z" fill="#555447" stroke="#a5a58e" stroke-width="1.4"/>
+    <g fill="none" stroke="#161e16" stroke-width="3">
+      <path d="M218 263 L232 270 M218 276 L232 283 M218 290 L233 297 M218 305 L233 312 M218 320 L233 327 M218 335 L233 342"/>
+    </g>
+    <path d="M211 237 L218 224 230 223 239 236 235 251 224 258 214 249Z" fill="url(#dome)" stroke="#626b57" stroke-width="1.5"/>
+    <path d="M218 231 L229 230 232 239 225 248 217 242Z" fill="url(#bright)"/>
+    <path d="M178 354 Q204 357 224 351 Q247 357 274 349 L275 360 250 370 229 365 201 370 178 365Z" fill="url(#steel)" stroke="#20291f" stroke-width="2"/>
+    <!-- Gauntlet closes around the grip; four articulated fingers. -->
+    <path d="M245 323 L268 338 274 365 252 378 234 359 229 341Z" fill="url(#bright)" stroke="#090e09" stroke-width="4"/>
+    <path d="M224 297 Q243 291 253 309 L252 337 234 349 211 331 210 307Z" fill="url(#plate)" stroke="#080d08" stroke-width="4"/>
+    <path d="M215 301 L232 302 238 313 231 321 213 316Z M213 317 L232 320 237 331 227 338 211 330Z" fill="url(#bright)" stroke="#182116" stroke-width="2.5"/>
+    <path d="M232 302 Q248 301 253 315 L247 330 239 326 241 314Z" fill="url(#plate)" stroke="#1b2519" stroke-width="2"/>
+    <path d="M242 342 L262 351 M247 352 L266 361" fill="none" stroke="#4b5544" stroke-width="2"/>
+    <!-- Broad but compact layered pauldrons. -->
+    <path d="M350 321 Q315 316 299 345 L297 369 Q327 388 363 374 L386 353Z" fill="url(#dome)" stroke="#080d08" stroke-width="5"/>
+    <path d="M309 343 Q328 320 351 331 L372 350 Q339 339 309 358" fill="none" stroke="#e1ddc6" stroke-width="2.2"/>
+    <path d="M300 364 Q330 381 363 366 L369 381 Q332 400 300 381Z" fill="url(#plate)" stroke="#0b110b" stroke-width="3.5"/>
+    <path d="M302 381 Q332 398 361 384 L360 399 Q329 415 304 397Z" fill="url(#plate)" stroke="#0b110b" stroke-width="3.5"/>
+    <path d="M468 326 Q500 313 526 343 L533 367 Q510 386 480 372 L458 350Z" fill="url(#dome)" stroke="#080d08" stroke-width="5"/>
+    <path d="M478 333 Q504 326 522 349" fill="none" stroke="#dbd8c1" stroke-width="2"/>
+    <path d="M480 363 Q508 380 533 362 L537 379 Q512 399 484 381Z" fill="url(#plate)" stroke="#0b110b" stroke-width="3.5"/>
+    <path d="M485 382 Q515 399 536 379 L539 396 Q513 414 490 400Z" fill="url(#side)" stroke="#0b110b" stroke-width="3.5"/>
+    <!-- Right hand rests quietly on the raised thigh. -->
+    <path d="M491 567 L515 580 509 598 484 594 477 580Z" fill="url(#plate)" stroke="#090e09" stroke-width="4"/>
+    <path d="M481 587 Q501 581 518 600 L522 619 513 623 498 608 504 628 495 632 481 612 485 633 476 631 466 608Z" fill="url(#bright)" stroke="#10170e" stroke-width="3"/>
+    <path d="M478 598 L494 611 M488 592 L506 606 M475 610 L484 618" fill="none" stroke="#656e5a" stroke-width="2.5"/>
+    <!-- Gorget and crimson neck wrap. -->
+    <path d="M367 294 L440 287 465 324 Q426 355 366 330 L354 314Z" fill="url(#side)" stroke="#080d08" stroke-width="4"/>
+    <path d="M360 304 Q397 325 442 298 L458 313 Q426 344 365 324Z" fill="url(#red)"/>
+    <path d="M366 312 Q407 338 448 309 M373 323 Q410 340 441 322" fill="none" stroke="#e3253c" stroke-width="2"/>
+    <path d="M434 307 Q461 296 473 311 L459 330 438 325Z" fill="#921028"/>
+    <!-- Bowed bascinet, three-quarter view. -->
+    <g transform="rotate(-13 398 241)">
+      <path d="M344 245 Q325 205 346 168 Q368 136 409 146 Q453 151 465 191 L462 240 437 287 373 299 346 275Z" fill="url(#dome)" stroke="#080d08" stroke-width="5"/>
+      <path d="M349 193 Q362 155 398 153 L406 163 Q374 172 366 206 L366 232 345 244Z" fill="url(#bright)"/>
+      <path d="M404 151 Q432 169 436 209 L430 239" fill="none" stroke="#c3c3ad" stroke-width="2"/>
+      <path d="M412 153 Q440 174 444 210" fill="none" stroke="#3c4737" stroke-width="2.5"/>
+      <path d="M344 226 Q390 239 453 219 L458 238 Q401 260 344 245Z" fill="#060a07"/>
+      <path d="M345 226 Q393 240 453 218" fill="none" stroke="#d7d4bc" stroke-width="3"/>
+      <path d="M344 246 Q394 261 450 239 L440 278 399 309 359 285 338 263Z" fill="url(#plate)" stroke="#10180f" stroke-width="3"/>
+      <path d="M345 250 L395 271 399 305 361 281 340 263Z" fill="url(#bright)"/>
+      <path d="M395 271 L442 246 438 276 402 305Z" fill="url(#side)"/>
+      <path d="M395 271 L399 305" fill="none" stroke="#c3c4aa" stroke-width="2"/>
+      <path d="M351 260 L358 264 M363 266 L370 270 M375 272 L382 276 M354 273 L361 277 M368 280 L375 284" fill="none" stroke="#20291d" stroke-width="3"/>
+      <circle cx="449" cy="228" r="5" fill="#a5ac97" stroke="#283122" stroke-width="2"/>
+      <circle cx="449" cy="228" r="1.3" fill="#e4dfc8"/>
+      <path d="M447 247 L447 262 431 290 411 300" fill="none" stroke="#838e77" stroke-width="2"/>
+    </g>
+    <!-- Restrained edge nicks and rivets; texture is added within this silhouette in code. -->
+    <g fill="#c6c7ac">
+      <circle cx="309" cy="366" r="2.4"/><circle cx="359" cy="374" r="2"/><circle cx="310" cy="390" r="2"/>
+      <circle cx="489" cy="371" r="2.2"/><circle cx="527" cy="373" r="2"/><circle cx="494" cy="391" r="2"/>
+      <circle cx="391" cy="514" r="2"/><circle cx="463" cy="517" r="2"/><circle cx="398" cy="536" r="2"/><circle cx="465" cy="541" r="2"/>
+      <circle cx="386" cy="637" r="2"/><circle cx="414" cy="646" r="2"/><circle cx="479" cy="651" r="2"/><circle cx="508" cy="651" r="2"/>
+      <circle cx="528" cy="721" r="2"/><circle cx="508" cy="737" r="2"/>
+    </g>
+    <g fill="none" stroke="#c9ccb3" stroke-width="1" opacity=".65">
+      <path d="M383 373 L380 393 M384 378 L381 389 M445 448 L451 460 M440 452 L445 464 M337 347 L343 352 M350 181 L348 194 M373 211 L369 221 M410 471 L414 478 M536 681 L540 687 M253 393 L257 400 M496 761 L500 754"/>
+    </g>
+  </g>
+</svg>

@@ -4,20 +4,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="A bouquet of lilies, grown from light and tiny characters. A real-time procedural ASCII artwork." />
-    <title>Lilies · an ASCII study</title>
+    <meta name="description" content="Three living ASCII studies: lilies, a solemn knight with a crimson scarf, and a knight in a colourful lily bed." />
+    <title>Still / in motion · ASCII studies</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Ctext x='16' y='25' fill='%23eab8cf' font-size='30' text-anchor='middle'%3E*%3C/text%3E%3C/svg%3E" />
   </head>
   <body>
-    <main id="stage" aria-label="An animated ASCII bouquet of twelve colourful lilies" role="img"></main>
-    <button id="replay" aria-label="Replay bouquet blooming"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>Replay</span></button>
+    <main id="stage" aria-label="A real-time ASCII artwork" role="img"></main>
+    <label class="scene-picker"><span class="sr-only">Choose artwork</span><select id="scene"><option value="lilies">Lilies</option><option value="knight">Knight</option><option value="garden">Knight in lilies</option></select></label>
+    <div id="transport" role="group" aria-label="Artwork controls">
+      <button id="playback" aria-label="Pause animation" aria-pressed="false" title="Pause / resume"><svg class="pause-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 3h2v10H4zm6 0h2v10h-2z"/></svg><svg class="play-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m5 3 8 5-8 5z"/></svg></button>
+      <button id="replay" aria-label="Restart animation" title="Restart"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>Restart</span></button>
+      <label><span class="sr-only">Rendering quality</span><select id="quick-quality" title="Rendering quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
+    </div>
     <p id="status" class="sr-only" aria-live="polite"></p>
     <aside id="dev" hidden aria-label="Animation controls">
       <div class="panel-heading">STUDIO <button id="close-dev" aria-label="Close controls">×</button></div>
       <button id="pause">Pause</button>
       <label>Timeline <output id="time-label">0.00 s</output><input id="seek" type="range" min="0" max="4.2" step="0.01" value="0" /></label>
       <label>Glyph density <input id="density" type="range" min="0.5" max="1" step="0.05" value="1" /></label>
+      <label>Glyph size <input id="glyph-size" type="range" min="0.75" max="1.6" step="0.05" value="1" /></label>
+      <label>Character spacing <input id="spacing" type="range" min="0.8" max="1.5" step="0.05" value="1" /></label>
       <label>Quality <select id="quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
+      <div id="knight-controls">
+        <label>Contrast <input id="contrast" type="range" min="0.6" max="1.8" step="0.02" value="1.12" /></label>
+        <label>Gamma <input id="gamma" type="range" min="0.5" max="1.5" step="0.02" value="0.86" /></label>
+        <label>Scarf speed <input id="scarf-speed" type="range" min="0" max="2" step="0.05" value="1" /></label>
+        <label>Scarf amplitude <input id="scarf-amplitude" type="range" min="0" max="2" step="0.05" value="1" /></label>
+        <label>Grass movement <input id="grass" type="range" min="0" max="2" step="0.05" value="1" /></label>
+        <label class="checkbox"><input id="source" type="checkbox" /> Show source illustration</label>
+      </div>
       <small>D to toggle · Space to pause</small>
     </aside>
     <script type="module" src="/src/main.ts"></script>

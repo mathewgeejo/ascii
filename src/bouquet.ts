@@ -5,7 +5,7 @@ export const DURATION = 4.2;
 type Vec = { x: number; y: number; z: number };
 type Color = readonly [number, number, number];
 type Vertex = Vec & { r: number; g: number; b: number };
-interface Flower { x: number; y: number; z: number; size: number; color: Color; tilt: number; yaw: number; rotation: number; delay: number }
+export interface Flower { x: number; y: number; z: number; size: number; color: Color; tilt: number; yaw: number; rotation: number; delay: number; baseX?: number; baseY?: number }
 const TAU = Math.PI * 2;
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const smooth = (n: number) => { n = clamp(n); return n * n * (3 - 2 * n); };
@@ -38,9 +38,9 @@ export class Bouquet {
   readonly cellX: number;
   readonly cellY: number;
   private vertices: Vertex[] = Array.from({ length: 33 * 13 }, () => ({ x: 0, y: 0, z: 0, r: 0, g: 0, b: 0 }));
-  constructor(quality: 'fine' | 'light' = 'fine') {
-    this.cellX = quality === 'fine' ? 2.5 : 3.5;
-    this.cellY = quality === 'fine' ? 4 : 5.6;
+  constructor(quality: 'fine' | 'light' = 'fine', private arrangement: Flower[] = flowers, glyphSize = 1) {
+    this.cellX = (quality === 'fine' ? 2.5 : 3.5) * glyphSize;
+    this.cellY = (quality === 'fine' ? 4 : 5.6) * glyphSize;
     this.cols = Math.ceil(WIDTH / this.cellX);
     this.rows = Math.ceil(HEIGHT / this.cellY);
     const length = this.cols * this.rows;
@@ -108,8 +108,8 @@ export class Bouquet {
   }
 
   private stemPosition(f: Flower, t: number, out: Vec) {
-    out.x = f.x * .035 * (1 - t) + f.x * Math.pow(t, 1.38) + Math.sin(t * Math.PI) * (f.x > 0 ? -19 : 19);
-    out.y = 60 + (f.y - 60) * t;
+    out.x = (f.baseX ?? f.x * .035) * (1 - Math.pow(t, 1.38)) + f.x * Math.pow(t, 1.38) + Math.sin(t * Math.PI) * (f.x > 0 ? -19 : 19);
+    out.y = (f.baseY ?? 60) + (f.y - (f.baseY ?? 60)) * t;
     out.z = -90 + (f.z + 90) * t;
   }
 
@@ -118,7 +118,7 @@ export class Bouquet {
     this.colors.fill(0);
     this.light.fill(0);
     const a = this.vertices[0], b = this.vertices[1];
-    flowers.forEach((f, index) => {
+    this.arrangement.forEach((f, index) => {
       const growth = smooth((time - index * .015) / .65);
       const end = Math.floor(growth * 100);
       this.stemPosition(f, 0, a);
@@ -129,15 +129,15 @@ export class Bouquet {
       }
     });
     // Alternate lanceolate leaves along each stem, with folded midribs.
-    flowers.forEach((f, index) => {
-      for (let j = 0; j < 5; j++) {
+    this.arrangement.forEach((f, index) => {
+      for (let j = 0; j < (f.baseX === undefined ? 5 : 3); j++) {
         const t = .18 + j * .124 + hash(index * 7 + j) * .055;
         const growth = smooth((time - .48 - j * .095 - index * .016) / .64);
         if (!growth) continue;
         this.stemPosition(f, t, a);
         const x = a.x, y = a.y, z = a.z;
         const sign = (index + j) % 2 ? 1 : -1;
-        const length = (88 + hash(index * 12 + j) * 97) * growth;
+        const length = (88 + hash(index * 12 + j) * 97) * growth * (f.baseX === undefined ? 1 : .5);
         const angle = sign * (.38 + hash(index * 9 + j) * .66) * (.3 + .7 * growth);
         const rows = 24, columns = 6;
         for (let u = 0; u <= rows; u++) {
@@ -157,7 +157,7 @@ export class Bouquet {
         this.mesh(rows, columns);
       }
     });
-    flowers.forEach((f, i) => this.flower(f, i, time));
+    this.arrangement.forEach((f, i) => this.flower(f, i, time));
   }
 
   private mesh(rows: number, columns: number) {

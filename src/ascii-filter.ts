@@ -1,0 +1,82 @@
+import { Filter, GlProgram, Texture } from 'pixi.js';
+import type { Quality, Settings } from './config';
+
+// PixiJS v8 filter vertex convention, with an additional fixed scene coordinate.
+const vertex = `
+in vec2 aPosition;
+out vec2 vSceneCoord;
+uniform vec4 uInputSize;
+uniform vec4 uOutputFrame;
+uniform vec4 uOutputTexture;
+void main() {
+  vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
+  position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
+  position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
+  gl_Position = vec4(position, 0.0, 1.0);
+  vSceneCoord = aPosition;
+}`;
+const fragment = `
+in vec2 vSceneCoord;
+out vec4 finalColor;
+uniform sampler2D uTexture;
+uniform sampler2D uGlyphs;
+uniform vec4 uInputSize;
+uniform vec4 uOutputFrame;
+uniform vec2 uCell;
+uniform float uSpacing;
+uniform float uContrast;
+uniform float uGamma;
+uniform float uDensity;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+void main() {
+  vec2 position = vSceneCoord * vec2(800.0, 1000.0);
+  vec2 cell = floor(position / uCell);
+  vec2 center = (cell + .5) * uCell / vec2(800.0, 1000.0);
+  vec3 source = texture(uTexture, center * uOutputFrame.zw * uInputSize.zw).rgb;
+  float noise = hash(cell);
+  float value = max(source.r, max(source.g, source.b));
+  if (value < .025 || noise > uDensity) { finalColor = vec4(0.,0.,0.,1.); return; }
+  float level = clamp(pow(value, uGamma) * uContrast, 0., 1.);
+  float glyph = clamp(floor(level * 9. + noise * 1.6 + 1.), 1., 11.);
+  vec2 local = (fract(position / uCell) - .5) * uSpacing + .5;
+  if (any(lessThan(local, vec2(0.))) || any(greaterThanEqual(local, vec2(1.)))) {
+    finalColor = vec4(0.,0.,0.,1.); return;
+  }
+  // Inset the atlas sample to prevent bleeding from adjacent characters.
+  vec2 glyphUV = vec2((glyph + clamp(local.x, .04, .96)) / 12., clamp(local.y, .035, .965));
+  float ink = texture(uGlyphs, glyphUV).a;
+  vec3 color = min(vec3(1.), pow(source, vec3(uGamma)) * uContrast * 1.45);
+  finalColor = vec4(color * ink, 1.);
+}`;
+
+export function createAsciiFilter() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 12 * 8; canvas.height = 12;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px "Courier New", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  Array.from(' .,:;-=+*#%@').forEach((char, i) => ctx.fillText(char, i * 8 + 4, 6));
+  const atlas = Texture.from(canvas);
+  const filter = new Filter({
+    glProgram: GlProgram.from({ vertex, fragment, name: 'stable-ascii' }),
+    resolution: 'inherit',
+    resources: {
+      uGlyphs: atlas.source,
+      ascii: {
+        uCell: { value: new Float32Array([2.5, 4]), type: 'vec2<f32>' },
+        uSpacing: { value: 1, type: 'f32' },
+        uContrast: { value: 1.12, type: 'f32' },
+        uGamma: { value: .86, type: 'f32' },
+        uDensity: { value: 1, type: 'f32' },
+      },
+    },
+  });
+  function configure(settings: Settings, quality: Quality) {
+    const u = filter.resources.ascii.uniforms;
+    u.uCell[0] = (quality === 'fine' ? 2.5 : 3.5) * settings.glyphSize;
+    u.uCell[1] = (quality === 'fine' ? 4 : 5.6) * settings.glyphSize;
+    u.uSpacing = settings.spacing; u.uContrast = settings.contrast;
+    u.uGamma = settings.gamma; u.uDensity = settings.density;
+  }
+  return { filter, configure };
+}
