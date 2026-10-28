@@ -1,4 +1,4 @@
-export type Scene = 'lilies' | 'stingray';
+export type Scene = 'lilies' | 'stingray' | 'skull';
 export type Quality = 'fine' | 'light';
 
 // All units are independent of the viewport and device-pixel ratio.

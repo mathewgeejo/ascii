@@ -1,6 +1,7 @@
 import { Application, Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { Bouquet, WIDTH, HEIGHT, DURATION } from './bouquet';
 import { Stingray } from './stingray';
+import { SpaceSkull } from './skull';
 import { createAsciiFilter } from './ascii-filter';
 import { CONFIG, type Quality, type Scene } from './config';
 import './style.css';
@@ -11,21 +12,26 @@ const params = new URLSearchParams(location.search);
 const app = new Application();
 const artwork = new Container();
 const lilyLayer = new Container();
-const stingray = new Stingray();
+const renderedScenes = { stingray: new Stingray(), skull: new SpaceSkull() };
 const settings = { ...CONFIG };
 const ascii = createAsciiFilter();
-const scenes: Scene[] = ['lilies', 'stingray'];
+const scenes: Scene[] = ['lilies', 'stingray', 'skull'];
+const descriptions: Record<Scene, string> = {
+  lilies: 'An animated ASCII bouquet of colourful lilies',
+  stingray: 'A luminous mythical ASCII stingray swimming through a dark ocean, with flapping fins, an undulating tail, moving water and drifting plankton',
+  skull: 'A three-dimensional human skull slowly rotating through a star field, with natural ivory bone, hollow sockets, a distant ringed planet and very occasional red laser fire',
+};
 let savedScene: string | null = null;
 try { savedScene = localStorage.getItem('ascii-scene'); } catch { /* Storage is optional. */ }
 let scene: Scene = scenes.includes(params.get('scene') as Scene) ? params.get('scene') as Scene
-  : scenes.includes(savedScene as Scene) ? savedScene as Scene : 'stingray';
+  : scenes.includes(savedScene as Scene) ? savedScene as Scene : 'skull';
 let quality: Quality = params.get('quality') === 'light' ? 'light' : 'fine';
 let bouquet = new Bouquet(quality);
 const sprites: Sprite[] = [];
 let visibleGlyphs = 0;
-let raySprite: Sprite;
+let sceneSprite: Sprite;
 let time = scene === 'lilies' && reducedMotion.matches ? DURATION : 0;
-const clocks: Record<Scene, number> = { lilies: reducedMotion.matches ? DURATION : 0, stingray: 0 };
+const clocks: Record<Scene, number> = { lilies: reducedMotion.matches ? DURATION : 0, stingray: 0, skull: 0 };
 let paused = false;
 let last = 0;
 let request = 0;
@@ -90,7 +96,7 @@ function updateUI(force = false) {
 function draw() {
   if (scene === 'lilies') drawLilies();
   else {
-    stingray.render(app,time,settings);
+    renderedScenes[scene].render(app,time,settings);
     ascii.filter.resources.ascii.uniforms.uTime = time;
   }
   app.render(); renderedFrames++; updateUI();
@@ -129,10 +135,10 @@ function resize() {
   ascii.filter.resources.uTexture = Texture.WHITE.source;
   ascii.filter.resources.uSampler = Texture.WHITE.source.style;
   app.renderer.resize(innerWidth, innerHeight);
-  if (scene === 'stingray') {
+  if (scene !== 'lilies') {
     const width = Math.round(innerWidth / innerHeight * 1000);
-    stingray.resize(width,1000,quality);
-    raySprite.width = width; raySprite.height = 1000;
+    renderedScenes[scene].resize(width,1000,quality);
+    sceneSprite.width = width; sceneSprite.height = 1000;
     ascii.filter.resources.ascii.uniforms.uSceneSize[0] = width;
     ascii.filter.resources.ascii.uniforms.uSceneSize[1] = 1000;
     artwork.scale.set(innerHeight / 1000);
@@ -149,21 +155,31 @@ function setScene(next: Scene, remember = true) {
   stop(); clocks[scene] = time; scene = next; time = clocks[scene];
   if (scene === 'lilies' && reducedMotion.matches) time = DURATION;
   paused = false; lastUiUpdate = -1;
-  lilyLayer.visible = scene === 'lilies'; raySprite.visible = scene === 'stingray';
+  lilyLayer.visible = scene === 'lilies'; sceneSprite.visible = scene !== 'lilies';
   if (scene === 'lilies') ensurePool();
-  $('#stage').setAttribute('aria-label', scene === 'lilies' ? 'An animated ASCII bouquet of colourful lilies'
-    : 'A luminous mythical ASCII stingray swimming through a dark ocean, with flapping fins, an undulating tail, moving water and drifting plankton');
+  else {
+    sceneSprite.texture = renderedScenes[scene].texture;
+    ascii.filter.resources.uSource = renderedScenes[scene].texture.source;
+    ascii.filter.resources.ascii.uniforms.uExposure = scene === 'stingray' ? 1.9 : 1.15;
+  }
+  $('#stage').setAttribute('aria-label', descriptions[scene]);
   $<HTMLSelectElement>('#scene').value = scene;
   $<HTMLInputElement>('#seek').max = scene === 'lilies' ? String(DURATION) : '24';
   $<HTMLInputElement>('#source').disabled = scene === 'lilies';
   $('#ocean-controls').hidden = scene === 'lilies';
-  $('#replay').setAttribute('aria-label', scene === 'lilies' ? 'Replay bouquet blooming' : 'Restart swimming animation');
+  $('#replay').setAttribute('aria-label', scene === 'lilies' ? 'Replay bouquet blooming' : 'Restart animation');
+  const controlLabels = scene === 'skull'
+    ? ['Animation speed', 'Rotation & floating', 'Bone detail', 'Stars & dust', 'Red lasers']
+    : ['Swimming speed', 'Fin movement', 'Tail movement', 'Water & plankton', 'Bioluminescence'];
+  for (const [i, id] of ['swim-speed', 'fin-amplitude', 'tail-amplitude', 'water', 'glow'].entries()) {
+    $(`#${id}`).parentElement!.querySelector('span')!.textContent = controlLabels[i];
+  }
   if (remember) {
     try { localStorage.setItem('ascii-scene', scene); } catch { /* Optional. */ }
     const url = new URL(location.href); url.searchParams.set('scene', scene); url.searchParams.delete('t');
     history.replaceState(null, '', url);
   }
-  $('#status').textContent = scene === 'lilies' ? 'Lilies selected.' : 'Stingray selected.';
+  $('#status').textContent = `${$<HTMLSelectElement>('#scene').selectedOptions[0].textContent} selected.`;
   resize(); updateUI(true); play();
 }
 
@@ -180,10 +196,11 @@ function configureQuality() {
 async function init() {
   await app.init({ background: '#000000', width: innerWidth, height: innerHeight, antialias: false,
     resolution: quality === 'fine' ? 2 : 1, autoDensity: true, autoStart: false, preference: 'webgl' });
-  raySprite = new Sprite(stingray.texture); raySprite.eventMode = 'none';
-  ascii.filter.resources.uSource = stingray.texture.source;
-  raySprite.filters = sourceFilter;
-  artwork.addChild(lilyLayer, raySprite); app.stage.addChild(artwork);
+  await renderedScenes.skull.load();
+  sceneSprite = new Sprite(renderedScenes.stingray.texture); sceneSprite.eventMode = 'none';
+  ascii.filter.resources.uSource = renderedScenes.stingray.texture.source;
+  sceneSprite.filters = sourceFilter;
+  artwork.addChild(lilyLayer, sceneSprite); app.stage.addChild(artwork);
   $('#stage').appendChild(app.canvas); app.canvas.setAttribute('aria-hidden', 'true');
   ready = true; ascii.configure(settings, quality); setScene(scene, false);
   $('#scene').addEventListener('change', e => setScene((e.target as HTMLSelectElement).value as Scene));

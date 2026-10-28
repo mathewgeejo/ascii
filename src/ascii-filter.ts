@@ -30,6 +30,7 @@ uniform float uContrast;
 uniform float uGamma;
 uniform float uDensity;
 uniform float uRaw;
+uniform float uExposure;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
 ${oceanGLSL}
 void main() {
@@ -54,7 +55,7 @@ void main() {
   // Inset the atlas sample to prevent bleeding from adjacent characters.
   vec2 glyphUV = vec2((glyph + clamp(local.x, .04, .96)) / 12., clamp(local.y, .035, .965));
   float ink = texture(uGlyphs, glyphUV).a;
-  vec3 color = min(vec3(1.), pow(source, vec3(uGamma)) * uContrast * 1.9);
+  vec3 color = min(vec3(1.), pow(source, vec3(uGamma)) * uContrast * uExposure);
   finalColor = vec4(color * ink, 1.);
 }`;
 
@@ -90,6 +91,7 @@ export function createAsciiFilter() {
         uTime: { value: 0, type: 'f32' },
         uWater: { value: 1, type: 'f32' },
         uRaw: { value: 0, type: 'f32' },
+        uExposure: { value: 1.9, type: 'f32' },
       },
     },
   });

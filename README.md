@@ -1,56 +1,51 @@
-# ASCII studies
+# Living ASCII studies
 
-Three real-time artworks built with Vite, TypeScript and PixiJS 8.22:
+Three real-time artworks built with Vite, TypeScript and PixiJS:
 
-- **Lilies** — the original twelve-flower procedural bouquet, blooming once over 4.2 seconds.
-- **Knight** — a large, broad armoured figure kneeling beside a planted sword, with the other gauntlet resting on the opposite thigh. A crimson scarf, grass and sparse windborne dust move continuously.
-- **Knight in lilies** — the same knight surrounded by a dense, colourful lily field extending across the complete viewport width.
+- **Space skull** — a natural anatomical human skull, with actual 3D rotation, hollow orbital and nasal cavities, individual teeth, cranial sutures and detailed bone shading. Sparse parallax stars and a ringed planet establish the space setting. A brief red laser burst fires from the eye sockets once per turn, about every 22 seconds at the default speed; otherwise the sockets remain empty.
+- **Stingray** — the original luminous procedural ray with rippling fins, an undulating tail, animated ocean caustics and drifting plankton.
+- **Lilies** — the original twelve-flower procedural bouquet, blooming over 4.2 seconds and holding when complete.
 
-The small selector in the top-right switches scenes and remembers the last choice. A first visit starts with the knight. No AI-generated image, reference screenshot, prerecorded video, remote font or external artwork is used by the site.
+The small selector at the top right switches artwork and remembers the selection. New visits start with the skull. The shark has been removed. No AI-generated image, reference, texture or geometry is used.
 
 ## Run
 
-Requires Node.js 22.12+ (tested with 22.14):
+Requires Node.js 22.12+.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the Local URL printed by Vite, normally http://127.0.0.1:5173.
+Open the local URL printed by Vite, normally http://127.0.0.1:5173. `npm run build` creates a static production site in `dist/`; `npm run preview` serves that output. Neither a backend nor an account is required. Run a production build only when requested or needed to investigate a confirmed error.
 
-```sh
-npm run build
-npm run preview
-```
+## Controls
 
-`dist/` contains the complete static production site; it needs no backend or account. Preview normally runs at http://127.0.0.1:4173.
-
-## Controls and configuration
-
-Bottom controls provide pause/resume, restart and Fine/Light quality. **Space** also pauses/resumes when a form control is not focused. **D** opens the hidden studio panel, which provides timeline seeking, glyph size/density/spacing, contrast, gamma, scarf speed/amplitude, grass motion, wind particles and source/ASCII comparison. Knight-specific controls are hidden in the lily scene.
-
-Defaults are in `src/config.ts`. `scale` controls uniform scene scale. Fine quality uses 2.5 × 4 world-unit cells and a 2× display buffer; Light uses 3.5 × 5.6 cells and a 1× buffer. Glyph size multiplies the logical cell size independently of display resolution. Character spacing adjusts the ink coverage within each cell. All randomness is seeded.
+Bottom controls provide pause/resume, restart and Fine/Light quality. **Space** also pauses/resumes unless a form control is focused. **D** opens the studio for timeline seeking, glyph size, density, character spacing, contrast, gamma and smooth-source comparison. Skull controls adjust animation speed, rotation/floating, bone relief, stars and red lasers. Reduced motion shows a stable frame; hidden tabs stop requesting animation frames.
 
 Deep links:
 
-- `?scene=knight`, `?scene=lilies`, `?scene=garden`
-- `?scene=knight&t=2.7` — deterministic, paused frame at 2.7 seconds
-- `?scene=garden&quality=light&debug` — lower density with the studio open
+- `?scene=skull`, `?scene=stingray`, `?scene=lilies`
+- `?scene=skull&t=0` — deterministic, paused front view
+- `?scene=skull&t=4.7` — profile
+- `?scene=skull&t=20.25` — brief red laser burst
+- `?scene=skull&quality=light&debug` — lighter rendering with the studio open
 
-Reduced motion displays a stable knight frame or the completed bouquet, including after restart. Hidden documents stop requesting animation frames. The knight wind uses continuous time without a timeline reset, so there is no artificial loop boundary. The lily scene stops rendering after its bloom is complete. Resizing preserves proportions and the complete sword, scarf and figure.
+## Skull reference and attribution
 
-## Source and rendering
+Anatomical reference photograph: [Humanskull ref front.JPG](https://commons.wikimedia.org/wiki/File:Humanskull_ref_front.JPG), by Meddlingwithnature, photographed May 30, 2012, CC BY-SA 3.0. It was consulted to check the skull's proportions and is not bundled in the artwork.
 
-`src/knight-art.svg` is an original hand-built layered vector illustration. Its bowed helmet, raised sword-side gauntlet, broad cuirass, overlapping pauldrons, waist lames, tassets, knee plates, greaves and sabatons use shaped gradients and black separations. `src/knight.ts` caches this artwork once, adds seeded surface wear, and draws the moving cloth/grass/dust into an offscreen source canvas. Scarf strips use independent travelling waves, a fixed root, increasing tip displacement, twist, and changing fold shadows. Rear/front layers protect the helmet and shoulder overlap.
+The skull uses [Human Skull](https://opengameart.org/content/human-skull-0), a human-made model and texture set by **CDmir**, published September 23, 2018 under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The downloaded OBJ contains 4,548 triangles. Its geometry and UV layout are preserved; the model is centered, uniformly scaled and packed into GPU buffers. Existing albedo, normal and ambient-occlusion maps are compressed locally. Asset provenance is recorded in `src/assets/skull/LICENSE.md`.
 
-`src/ascii-filter.ts` performs the knight's ASCII conversion on the GPU using PixiJS's supported v8 Filter/GlProgram APIs. A cached, explicitly drawn 5×7 monospaced glyph atlas makes texture independent of operating-system font rasterization. Source colours, gamma, contrast and stable cell noise determine glyph coverage. No text objects, DOM characters, CPU pixel readbacks or large typed-array allocations are created during the animation loop. Warm grey metal, crimson cloth, muted olive grass and dust use the same ASCII filter.
+`scripts/prepare-skull.mjs` reproduces the conversion after extracting the original `skull-obj.zip` into `test-results/`. It performs ordinary geometry processing and canvas texture resizing, with no AI tools.
 
-`src/bouquet.ts` generates curved stems, folded leaves, six-petal lily surfaces and stamens, rasterizes their 3D surfaces into reusable character-resolution colour/depth buffers, and resolves intersections per cell. The original bouquet retains its pooled PixiJS sprite renderer. `src/garden.ts` generates several seeded rows of lilies across the scene width. The complete flower field is cached in front/rear layers and regenerated only when its width, glyph resolution or quality changes.
+## Rendering
 
-The knight is drawn larger than the original bouquet, and its garden source canvas expands horizontally on wide screens to cover the full ground while retaining the figure's proportions. Armour geometry remains static while cloth, dust and grass animate.
+`src/skull.ts` renders the anatomical mesh with a real depth buffer, perspective, rotating surface normals, tangent-space bone relief, ambient occlusion and directional lighting. Red laser cylinders use the same 3D transformation and depth test, so they originate in the sockets and are occluded by bone. The star field and ringed planet are procedural shaders. All runtime assets are local.
 
-PixiJS APIs were checked against official [Filters](https://pixijs.com/8.x/guides/components/filters), [Filter](https://pixijs.download/v8.22.0/docs/filters.Filter.html), [Texture](https://pixijs.download/v8.22.0/docs/rendering.Texture.html), and [Sprite](https://pixijs.download/v8.22.0/docs/scene.Sprite.html) documentation.
+`src/ascii-filter.ts` applies the existing GPU ASCII treatment: a hand-drawn 5×7 glyph atlas, stable cell noise, source colour, contrast and gamma. Scene-specific exposure preserves the skull's natural shading while retaining the original stingray treatment. Fine uses 2.5×4 world-unit cells and a 2× display buffer; Light uses 3.5×5.6 cells and a 1× display buffer.
+
+`src/stingray.ts` retains the original deforming shader meshes. `src/ocean.ts` generates moving water and plankton. `src/bouquet.ts` retains the original procedural flower geometry and character-resolution depth buffer.
 
 ## Verification
 
@@ -58,12 +53,7 @@ With the dev server running:
 
 ```sh
 npm run verify
+node scripts/capture.mjs
 ```
 
-The browser checks use locally installed Chrome through Playwright. Set `PREVIEW_URL` to run against a production preview or another server. They verify rendered armour/scarf pixels, stable armour while the scarf moves, deterministic seeking, pause/resume, restart, hidden-tab suspension, all three scenes, quality settings, advanced controls, source comparison, remembered selection, mobile/landscape layouts, lily growth/replay/hold, reduced motion and console errors. Screenshots and a JSON report are saved under `test-results/`; these are QA artifacts and are not bundled as artwork.
-
-`node scripts/capture.mjs` captures quick desktop/source/mobile comparison views.
-
-## Reference matching limits
-
-The supplied knight still image was used to refine the bowed angular helmet, left sword, raised arm, pale armour against black, crimson scarf and grassy silhouette. Subsequent requested changes broaden and enlarge the figure, make the kneeling pose explicit, move the free hand onto the opposite thigh, strengthen the wind and add dust. Fine armour contours remain an original vector interpretation rather than an exact tracing. No playable reference video was available, so the wind motion is procedural and has not been matched frame for frame. The original lily video was also unavailable.
+Both scripts accept a local URL as the first argument, or `PREVIEW_URL` in the environment. They use locally installed Chrome through Playwright. Verification checks actual rendered bone and laser pixels, 3D profile rotation, deterministic seeking, pause/restart, hidden-tab suspension, both qualities, source comparison, phone/landscape resizing, the retained lily and stingray scenes, remembered selection, reduced motion, console errors and unexpected remote requests. Screenshots and the JSON report are written to ignored `test-results/` and are not bundled as artwork.
