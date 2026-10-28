@@ -1,7 +1,7 @@
 import { Assets, Buffer, BufferUsage, Geometry, GlProgram, Mesh, Shader, State, type Application, type Texture } from 'pixi.js';
 import type { Settings } from './config';
 import { ShaderScene } from './shader-scene';
-import { spaceFragment } from './space';
+import { backgroundFragment } from './background';
 import modelUrl from './assets/skull/mesh.bin?url';
 import colorUrl from './assets/skull/bone.jpg';
 import normalUrl from './assets/skull/normal.png';
@@ -14,9 +14,11 @@ uniform vec2 uSize;
 uniform float uTime;
 uniform float uMotion;
 uniform float uScale;
+uniform float uRotation;
+uniform vec2 uOffset;
 mat2 rotate(float a) { float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
 vec3 orient(vec3 p) {
-  p.xz=rotate(.23+uTime*.28*uMotion)*p.xz;
+  p.xz=rotate(.23+uTime*uRotation)*p.xz;
   p.xy=rotate(sin(uTime*.27)*.025*uMotion)*p.xy;
   return p;
 }
@@ -25,6 +27,7 @@ vec3 place(vec3 p) {
   p.x+=sin(uTime*.22)*.055*uMotion;
   p.y+=sin(uTime*.48)*.075*uMotion;
   p.z+=sin(uTime*.19)*.045*uMotion;
+  p.xy+=uOffset;
   return p;
 }
 vec4 project(vec3 p) {
@@ -59,6 +62,8 @@ uniform sampler2D uBone;
 uniform sampler2D uNormal;
 uniform sampler2D uOcclusion;
 uniform float uDetail;
+uniform float uLight;
+uniform float uLightAngle;
 void main() {
   vec3 n=normalize(vNormal);
   vec3 view=normalize(vec3(0,0,5.2)-vWorld);
@@ -72,11 +77,11 @@ void main() {
   float grey=dot(albedo,vec3(.299,.587,.114));
   albedo=mix(albedo,grey*vec3(1.03,1.01,.96),.35);
   float ao=texture(uOcclusion,vUV).r;
-  vec3 key=normalize(vec3(-.65,.85,1.));
+  vec3 key=normalize(vec3(sin(uLightAngle),.85,cos(uLightAngle)));
   float diffuse=max(0.,dot(n,key));
   float fill=max(0.,dot(n,normalize(vec3(.8,.1,.6))));
   float rim=pow(max(0.,dot(n,normalize(vec3(.3,.4,-1.)))),2.);
-  vec3 color=albedo*(.18+diffuse*.82+fill*.18)*mix(.10,1.,ao);
+  vec3 color=albedo*(.18+(diffuse*.82+fill*.18)*uLight)*mix(.10,1.,ao);
   color+=vec3(.075,.09,.10)*rim*ao;
   float shine=pow(max(0.,dot(reflect(-key,n),view)),35.);
   color+=shine*.055*ao;
@@ -122,7 +127,7 @@ export class SpaceSkull extends ShaderScene {
   private beams?: Mesh<Geometry, Shader>;
   private loading?: Promise<void>;
 
-  constructor() { super(spaceFragment, 'skull-deep-space'); }
+  constructor() { super(backgroundFragment, 'skull-deep-space'); }
 
   load() { return this.loading ??= this.loadModel(); }
 
@@ -144,11 +149,12 @@ export class SpaceSkull extends ShaderScene {
     const uniforms = () => ({
       uTime: { value: 0, type: 'f32' as const }, uMotion: { value: 1, type: 'f32' as const },
       uScale: { value: 1, type: 'f32' as const }, uSize: { value: new Float32Array([1200, 1000]), type: 'vec2<f32>' as const },
+      uRotation: { value: .28, type: 'f32' as const }, uOffset: { value: new Float32Array(2), type: 'vec2<f32>' as const },
     });
     const boneShader = new Shader({
       glProgram: GlProgram.from({ vertex: boneVertex, fragment: boneFragment, name: 'anatomical-skull', preferredFragmentPrecision: 'highp' }),
       resources: { uBone: color.source, uNormal: normal.source, uOcclusion: ao.source,
-        model: { ...uniforms(), uDetail: { value: 1, type: 'f32' } } },
+        model: { ...uniforms(), uDetail: { value: 1, type: 'f32' }, uLight: { value: 1, type: 'f32' }, uLightAngle: { value: -.576, type: 'f32' } } },
     });
     const state = State.for2d(); state.blend = false; state.depthTest = true; state.depthMask = true;
     this.bone = new Mesh({ geometry, shader: boneShader, state }); this.bone.eventMode = 'none';
@@ -171,9 +177,11 @@ export class SpaceSkull extends ShaderScene {
     const power = ramp(20.1, 20.14, phase) * (1 - ramp(20.38, 20.43, phase)) * settings.glow;
     for (const item of [this.bone, this.beams]) if (item) {
       const u = item.shader!.resources.model.uniforms;
-      u.uTime = t; u.uMotion = settings.finAmplitude; u.uScale = settings.scale;
+      u.uTime = t; u.uMotion = settings.motion.includes('float') ? settings.finAmplitude : 0; u.uScale = settings.scale;
+      u.uRotation = settings.motion.includes('spin') ? settings.rotation : 0;
+      u.uOffset.set([settings.positionX * 1.6, -settings.positionY * 1.6]);
       u.uSize.set(this.shader.resources.scene.uniforms.uSize);
-      if (item === this.bone) u.uDetail = settings.tailAmplitude;
+      if (item === this.bone) { u.uDetail = settings.tailAmplitude; u.uLight = settings.lightIntensity; u.uLightAngle = settings.lightAngle * Math.PI / 180; }
       else { u.uPower = power; item.visible = power > .001; }
     }
     super.render(app, time, settings);

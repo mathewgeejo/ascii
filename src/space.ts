@@ -1,12 +1,6 @@
 // Entirely procedural deep space, rendered through the same ASCII cells as the skull.
 // Star cores span multiple source pixels so they survive the character-grid sampling.
-export const spaceFragment = `
-in vec2 vUV;
-out vec4 finalColor;
-uniform vec2 uSize;
-uniform float uTime;
-uniform float uParticles;
-
+export const spaceGLSL = `
 float hash(vec2 p) {
   p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32);
   return fract(p.x*p.y);
@@ -101,16 +95,16 @@ vec3 distantMoon(vec3 background,vec2 p) {
   return background;
 }
 
-void main() {
+vec3 deepSpace(vec2 uv) {
   float aspect=uSize.x/uSize.y;
-  vec2 p=(vUV-.5)*vec2(aspect,1.);
+  vec2 p=(uv-.5)*vec2(aspect,1.);
   // Each depth follows the same slow camera drift, with its own parallax distance.
   vec2 drift=vec2(uTime*.0007+sin(uTime*.07)*.009,uTime*.00019+cos(uTime*.05)*.006)*uParticles;
   vec3 color=vec3(.0004,.0006,.0015)+nebula(p,drift);
   color+=stars(p,drift);
-  vec2 planet=(vUV-vec2(.82,.20))*vec2(aspect,1.)+drift*.12;
+  vec2 planet=(uv-vec2(.82,.20))*vec2(aspect,1.)+drift*.12;
   color=ringedPlanet(color,planet);
-  vec2 moon=(vUV-vec2(.13,.72))*vec2(aspect,1.)+drift*.06;
+  vec2 moon=(uv-vec2(.13,.72))*vec2(aspect,1.)+drift*.06;
   color=distantMoon(color,moon);
-  finalColor=vec4(color,1.);
+  return color;
 }`;

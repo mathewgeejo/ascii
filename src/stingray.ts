@@ -8,6 +8,9 @@ uniform float uAmplitude;
 uniform float uTailAmplitude;
 uniform float uPart;
 uniform vec2 uSize;
+uniform float uScale;
+uniform vec2 uOffset;
+uniform float uRotation;
 vec3 surface(vec2 uv) {
   float t = uv.y, s = uv.x * 2. - 1.;
   if (uPart > .5) {
@@ -36,12 +39,12 @@ vec3 surface(vec2 uv) {
   return vec3(x,y,z);
 }
 vec3 project(vec3 p) {
-  float bank = -.32 + sin(uTime * .35) * .025;
+  float bank = -.32 + sin(uTime * .35) * .025 + uTime*uRotation;
   float c = cos(bank), s = sin(bank);
   vec2 xy = mat2(c,s,-s,c) * p.xy;
-  float scale = min(uSize.x / 1080., uSize.y / 1000.);
-  return vec3(uSize.x * .5 + xy.x * scale,
-    uSize.y * .365 + (xy.y * .87 - p.z * .67 + sin(uTime * .53) * 5.) * scale,
+  float scale = min(uSize.x / 1080., uSize.y / 1000.)*uScale;
+  return vec3(uSize.x * (.5+uOffset.x*.3) + xy.x * scale,
+    uSize.y * (.365+uOffset.y*.3) + (xy.y * .87 - p.z * .67 + sin(uTime * .53) * 5.) * scale,
     p.z);
 }`;
 
@@ -141,6 +144,7 @@ function mesh(rows: number, columns: number, part: number) {
       uTime: { value: 0, type: 'f32' }, uAmplitude: { value: 1, type: 'f32' },
       uTailAmplitude: { value: 1, type: 'f32' }, uGlow: { value: 1, type: 'f32' },
       uPart: { value: part, type: 'f32' }, uSize: { value: new Float32Array([1200,1000]), type: 'vec2<f32>' },
+      uScale: {value:1,type:'f32'},uOffset:{value:new Float32Array(2),type:'vec2<f32>'},uRotation:{value:0,type:'f32'},
     } },
   });
   const result = new Mesh({ geometry, shader }); result.eventMode = 'none';
@@ -168,8 +172,10 @@ export class Stingray {
   render(app: Application, time: number, settings: Settings) {
     for (const item of [this.body,this.tail]) {
       const u = item.shader!.resources.ray.uniforms;
-      u.uTime = time * settings.swimSpeed; u.uAmplitude = settings.finAmplitude;
+      u.uTime = settings.motion==='still'?0:time * settings.swimSpeed; u.uAmplitude = settings.finAmplitude;
       u.uTailAmplitude = settings.tailAmplitude; u.uGlow = settings.glow;
+      u.uScale=settings.scale;u.uOffset.set([settings.positionX,settings.positionY]);
+      u.uRotation=settings.motion.includes('spin')?settings.rotation:0;
     }
     app.renderer.render({ container: this.source, target: this.texture, clear: true });
   }

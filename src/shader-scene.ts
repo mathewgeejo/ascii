@@ -1,5 +1,5 @@
 import { Container, GlProgram, Mesh, MeshGeometry, RenderTarget, RenderTexture, Shader, type Application } from 'pixi.js';
-import type { Quality, Settings } from './config';
+import { backgroundIndex, type Quality, type Settings } from './config';
 
 const vertex = `
 in vec2 aPosition;
@@ -26,6 +26,8 @@ export class ShaderScene {
         uParticles: { value: 1, type: 'f32' },
         uGlow: { value: 1, type: 'f32' },
         uScale: { value: 1, type: 'f32' },
+        uWater: { value: 1, type: 'f32' },
+        uBackground: { value: 0, type: 'f32' },
       } },
     });
     const geometry = new MeshGeometry({
@@ -48,6 +50,8 @@ export class ShaderScene {
     u.uTime = time * settings.swimSpeed; u.uMotion = settings.finAmplitude;
     u.uDetail = settings.tailAmplitude; u.uParticles = settings.water;
     u.uGlow = settings.glow; u.uScale = settings.scale;
+    u.uWater = settings.water; u.uBackground = backgroundIndex(settings.background);
     app.renderer.render({ container: this.source, target: this.target, clear: true });
   }
+  destroy(){this.source.destroy({children:true});this.target.destroy();this.texture.destroy(true);}
 }

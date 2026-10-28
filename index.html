@@ -1,42 +1,118 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Living ASCII studies: luminous stingrays, blooming lilies and a detailed anatomical 3D human skull rotating through space with occasional red lasers. Built with PixiJS." />
-    <title>Pelagic · living ASCII</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Ctext x='16' y='25' fill='%23eab8cf' font-size='30' text-anchor='middle'%3E*%3C/text%3E%3C/svg%3E" />
-  </head>
-  <body>
-    <main id="stage" aria-label="A real-time ASCII artwork" role="img"></main>
-    <label class="scene-picker"><span class="sr-only">Choose artwork</span><select id="scene"><option value="stingray">Stingray</option><option value="lilies">Lilies</option><option value="skull">Space skull</option></select></label>
-    <div id="transport" role="group" aria-label="Artwork controls">
-      <button id="playback" aria-label="Pause animation" aria-pressed="false" title="Pause / resume"><svg class="pause-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 3h2v10H4zm6 0h2v10h-2z"/></svg><svg class="play-icon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m5 3 8 5-8 5z"/></svg></button>
-      <button id="replay" aria-label="Restart animation" title="Restart"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg><span>Restart</span></button>
-      <label><span class="sr-only">Rendering quality</span><select id="quick-quality" title="Rendering quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
-    </div>
-    <p id="status" class="sr-only" aria-live="polite"></p>
-    <aside id="dev" hidden aria-label="Animation controls">
-      <div class="panel-heading">STUDIO <button id="close-dev" aria-label="Close controls">×</button></div>
-      <button id="pause">Pause</button>
-      <label>Timeline <output id="time-label">0.00 s</output><input id="seek" type="range" min="0" max="4.2" step="0.01" value="0" /></label>
-      <label>Glyph density <input id="density" type="range" min="0.5" max="1" step="0.05" value="1" /></label>
-      <label>Glyph size <input id="glyph-size" type="range" min="0.75" max="1.6" step="0.05" value="1" /></label>
-      <label>Character spacing <input id="spacing" type="range" min="0.8" max="1.5" step="0.05" value="1" /></label>
-      <label>Quality <select id="quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
-      <div id="ocean-controls">
-        <label>Contrast <input id="contrast" type="range" min="0.6" max="1.8" step="0.02" value="1.12" /></label>
-        <label>Gamma <input id="gamma" type="range" min="0.5" max="1.5" step="0.02" value="0.86" /></label>
-        <label><span>Swimming speed</span> <input id="swim-speed" type="range" min="0" max="2" step="0.05" value="1" /></label>
-        <label><span>Fin movement</span> <input id="fin-amplitude" type="range" min="0" max="1.5" step="0.05" value="1" /></label>
-        <label><span>Tail movement</span> <input id="tail-amplitude" type="range" min="0" max="2" step="0.05" value="1" /></label>
-        <label><span>Water &amp; plankton</span> <input id="water" type="range" min="0" max="2" step="0.05" value="1" /></label>
-        <label><span>Bioluminescence</span> <input id="glow" type="range" min="0" max="2" step="0.05" value="1" /></label>
-        <label class="checkbox"><input id="source" type="checkbox" /> Show smooth geometry</label>
-      </div>
-      <small>D to toggle · Space to pause</small>
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0d0d10"/>
+  <meta name="description" content="Your own ASCII animation studio. Turn photos, videos and 3D models into moving character art. Create, customise and export, without code."/>
+  <title>ASCII Studio · Make something move</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316161c'/%3E%3Ctext x='16' y='24' fill='%23d3b5f4' font-size='25' text-anchor='middle'%3E*%3C/text%3E%3C/svg%3E"/>
+</head>
+<body data-editor="false">
+  <div id="studio-shell">
+    <header class="app-header">
+      <a class="wordmark" href="./" aria-label="ASCII Studio home"><span class="brand-glyph">▦</span><span>ASCII<span class="brand-slash"> / </span><b>STUDIO</b></span><span class="version">01</span></a>
+      <div class="project-heading"><input id="project-name" value="Untitled scene" maxlength="80" aria-label="Scene name"/><span id="save-state">Unsaved scene</span></div>
+      <div class="header-actions"><button id="open-projects" class="subtle" aria-label="Open saved scenes" title="Saved scenes">▤</button><button id="focus-view" class="subtle">↗ <span>Focus view</span></button><button id="save-project" class="secondary">Save scene</button><button id="open-export" class="primary">Export <span>↗</span></button></div>
+    </header>
+
+    <aside id="library" class="library">
+      <div class="panel-title"><span>YOUR WORKSPACE</span><span class="tiny-symbol">✳</span></div>
+      <section class="library-section"><div class="section-heading"><h2>Start with a scene</h2><span>03</span></div>
+        <div class="preset-list">
+          <button class="preset-card active" data-preset="skull"><span class="preset-art skull-art"><svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M17 37C7 20 16 7 30 7s23 13 13 30l-4 3v12H21V40z"/><path d="m22 39 3 3h10l3-3M21 45h18M26 42v10m8-10v10"/><ellipse cx="22" cy="28" rx="5" ry="6"/><ellipse cx="38" cy="28" rx="5" ry="6"/><path d="m30 32-3 5h6z"/></svg></span><span><strong>Space skull</strong><small>Orbiting the unknown</small></span><span class="preset-arrow">↗</span></button>
+          <button class="preset-card" data-preset="stingray"><span class="preset-art ray-art"><svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 12C25 20 13 18 6 30c12 0 16 14 24 9 8 5 12-9 24-9-7-12-19-10-24-18Z"/><path d="M30 15v24c0 13 13 9 7 18M13 29l13 5m21-5-13 5"/></svg></span><span><strong>Stingray</strong><small>Below the surface</small></span><span class="preset-arrow">↗</span></button>
+          <button class="preset-card" data-preset="lilies"><span class="preset-art lily-art"><svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 25C9 12 17 5 27 18c3-21 13-20 10 1 18-12 22-4 5 8 22 2 15 13-2 8 5 19-7 19-10 2-13 13-21 7-9-6-19-2-18-14 2-9Z"/><path d="M31 28c-3 13 4 22 0 30M32 45c-18-10-20-2-1 6M31 53c17-18 20-10 0 3"/></svg></span><span><strong>Lilies</strong><small>A little room to bloom</small></span><span class="preset-arrow">↗</span></button>
+        </div>
+        <select id="scene" class="sr-only" aria-label="Choose artwork"><option value="stingray">Stingray</option><option value="lilies">Lilies</option><option value="skull">Space skull</option></select>
+      </section>
+
+      <section class="library-section"><div class="section-heading"><h2>Bring your own</h2></div>
+        <button id="import-trigger" class="import-zone"><span class="import-plus">+</span><strong>Drop artwork here</strong><span>or click to browse files</span><small>IMAGE · VIDEO · 3D MODEL</small></button>
+        <input id="file-input" type="file" multiple accept="image/*,video/*,.glb,.gltf,.obj,.stl,.mtl,.bin,.json,.ascii.json" hidden/>
+        <p class="input-hint">Photos, videos, GLB, glTF, OBJ or STL.<br>Include a model’s companion files together.</p>
+        <button id="imported-card" class="imported-card" hidden><span>▧</span><span id="imported-name"></span><small id="imported-kind"></small></button>
+      </section>
+
+      <section class="library-section saved-section"><div class="section-heading"><h2>Saved scenes</h2><span id="project-count">00</span></div><div id="project-list"><p class="empty-projects">Your next favourite starts here.<br>Save a scene to keep it.</p></div></section>
+      <div class="local-note"><span class="status-dot"></span> Files stay on this device</div>
     </aside>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+
+    <section class="preview-panel" aria-label="Live artwork preview">
+      <div class="preview-heading"><span><i class="status-dot"></i> LIVE PREVIEW</span><div><label><span class="sr-only">Canvas shape</span><select id="canvas-aspect"><option value="free">Fit workspace</option><option value="landscape">16:9 Landscape</option><option value="portrait">9:16 Portrait</option><option value="square">1:1 Square</option></select></label><span class="heading-divider"></span><select id="quick-quality" aria-label="Rendering quality"><option value="fine">Fine quality</option><option value="light">Light quality</option></select></div></div>
+      <div id="canvas-area"><main id="stage" aria-label="A live ASCII artwork" role="img"><p class="loading-art">Making space for your imagination<span>Loading artwork…</span></p></main><div id="drop-overlay" hidden><span>+</span>Drop to turn it into ASCII</div></div>
+      <div class="preview-caption"><span id="scene-caption">SPACE SKULL</span><span id="canvas-size">—</span><span>YOUR PIXELS, IN CHARACTER.</span></div>
+    </section>
+
+    <aside id="dev" class="inspector" aria-label="Artwork settings">
+      <div class="panel-title"><span>MAKE IT YOURS</span><button id="close-dev" aria-label="Focus artwork" title="Focus artwork">↗</button></div>
+      <div class="inspector-tabs" role="tablist" aria-label="Settings"><button id="look-tab" role="tab" aria-selected="true" aria-controls="look-panel">Look</button><button id="motion-tab" role="tab" aria-selected="false" aria-controls="motion-panel">Motion &amp; scene</button></div>
+      <div id="look-panel" role="tabpanel" aria-labelledby="look-tab" class="tab-panel">
+        <section class="control-section"><div class="section-heading"><h2>A little inspiration</h2></div><div class="style-presets"><button data-style="original" class="selected"><span>Aa</span>Original</button><button data-style="terminal"><span class="terminal-sample">01</span>Terminal</button><button data-style="paper"><span class="paper-sample">::</span>Ivory</button><button data-style="neon"><span class="neon-sample">#*</span>Neon</button></div></section>
+        <section class="control-section"><div class="section-heading"><h2>Characters</h2><span>01</span></div>
+          <label class="select-control">Character set<select data-setting="charset" id="character-set"><option value="classic">Classic ASCII · . : + # @</option><option value="dots">Halftone dots · •</option><option value="blocks">Solid blocks · ▄ ▆ █</option><option value="binary">Binary · 0 1</option><option value="custom">Write your own…</option></select></label>
+          <label id="custom-characters" class="text-control" hidden>Your characters, light → dark<input id="characters" data-setting="characters" value=" .:-=+*#%@" maxlength="32" spellcheck="false"/></label>
+          <label class="range-control"><span>Character size<output data-value="glyphSize"></output></span><input id="glyph-size" data-setting="glyphSize" type="range" min=".5" max="3" step=".05"/></label>
+          <label class="range-control"><span>Density<output data-value="density"></output></span><input id="density" data-setting="density" type="range" min=".1" max="1" step=".05"/></label>
+        </section>
+        <section class="control-section"><div class="section-heading"><h2>Colour &amp; tone</h2><span>02</span></div>
+          <label class="select-control">Colour mode<select data-setting="palette" id="palette"><option value="original">Original colours</option><option value="mono">Single ink</option><option value="duotone">Two-tone</option></select></label>
+          <div class="colour-controls" id="colour-controls" hidden><label>Light ink<input type="color" data-setting="inkColor" id="ink-color"/></label><label id="shadow-colour">Shadow ink<input type="color" data-setting="shadowColor" id="shadow-color"/></label></div>
+          <label class="range-control"><span>Brightness<output data-value="brightness"></output></span><input data-setting="brightness" id="brightness" type="range" min=".2" max="2.5" step=".05"/></label>
+          <label class="range-control"><span>Contrast<output data-value="contrast"></output></span><input id="contrast" data-setting="contrast" type="range" min=".5" max="2" step=".02"/></label>
+        </section>
+        <section class="control-section"><div class="section-heading"><h2>Set the atmosphere</h2><span>03</span></div>
+          <label class="select-control">Background<select data-setting="background" id="background"><option value="space">Deep space</option><option value="ocean">Underwater</option><option value="black">Pure black</option><option value="gradient">Violet haze</option></select></label>
+          <label class="range-control"><span>Atmosphere intensity<output data-value="water"></output></span><input id="water" data-setting="water" type="range" min="0" max="2" step=".05"/></label>
+        </section>
+        <details class="control-section"><summary>Fine adjustments <span>+</span></summary>
+          <label class="range-control"><span>Character spacing<output data-value="spacing"></output></span><input id="spacing" data-setting="spacing" type="range" min=".7" max="1.6" step=".05"/></label>
+          <label class="range-control"><span>Gamma<output data-value="gamma"></output></span><input id="gamma" data-setting="gamma" type="range" min=".4" max="1.6" step=".02"/></label>
+          <label class="switch-control"><input id="source" data-setting="source" type="checkbox"/><span>Compare with original</span></label>
+          <select id="quality" aria-label="Rendering quality" class="sr-only"><option value="fine">Fine</option><option value="light">Light</option></select>
+        </details>
+      </div>
+      <div id="motion-panel" role="tabpanel" aria-labelledby="motion-tab" class="tab-panel" hidden>
+        <section class="control-section"><div class="section-heading"><h2>Give it life</h2><span>01</span></div>
+          <label class="select-control">Motion preset<select id="motion" data-setting="motion"><option value="float-spin">Float &amp; rotate</option><option value="float">Gentle float</option><option value="spin">Continuous rotation</option><option value="still">Still</option></select></label>
+          <label class="range-control"><span>Playback speed<output data-value="swimSpeed"></output></span><input id="swim-speed" data-setting="swimSpeed" type="range" min="0" max="2" step=".05"/></label>
+          <label class="range-control"><span>Rotation speed<output data-value="rotation"></output></span><input id="rotation" data-setting="rotation" type="range" min="0" max="1.5" step=".02"/></label>
+          <label class="range-control"><span>Float / fin movement<output data-value="finAmplitude"></output></span><input id="fin-amplitude" data-setting="finAmplitude" type="range" min="0" max="2" step=".05"/></label>
+          <label class="range-control" id="effect-control"><span><span id="effect-label">Red laser intensity</span><output data-value="glow"></output></span><input id="glow" data-setting="glow" type="range" min="0" max="2" step=".05"/></label>
+          <label class="range-control" id="detail-control"><span>Bone / tail detail<output data-value="tailAmplitude"></output></span><input id="tail-amplitude" data-setting="tailAmplitude" type="range" min="0" max="2" step=".05"/></label>
+          <p class="input-hint" id="motion-hint">True 3D rotation. Red lasers fire briefly, once per turn.</p>
+        </section>
+        <section class="control-section"><div class="section-heading"><h2>Composition</h2><span>02</span></div>
+          <label class="range-control"><span>Artwork scale<output data-value="scale"></output></span><input id="scale" data-setting="scale" type="range" min=".3" max="2.5" step=".05"/></label>
+          <label class="range-control"><span>Horizontal position<output data-value="positionX"></output></span><input data-setting="positionX" id="position-x" type="range" min="-1" max="1" step=".02"/></label>
+          <label class="range-control"><span>Vertical position<output data-value="positionY"></output></span><input data-setting="positionY" id="position-y" type="range" min="-1" max="1" step=".02"/></label>
+          <label class="select-control" id="fit-control" hidden>Image framing<select data-setting="fit" id="media-fit"><option value="contain">Fit entire artwork</option><option value="cover">Fill the canvas</option></select></label>
+        </section>
+        <section class="control-section" id="lighting-controls"><div class="section-heading"><h2>Lighting</h2><span>03</span></div>
+          <label class="range-control"><span>Light strength<output data-value="lightIntensity"></output></span><input id="light-intensity" data-setting="lightIntensity" type="range" min="0" max="3" step=".05"/></label>
+          <label class="range-control"><span>Light direction<output data-value="lightAngle"></output></span><input id="light-angle" data-setting="lightAngle" type="range" min="-180" max="180" step="1"/></label>
+        </section>
+      </div>
+      <div class="inspector-bottom"><button id="reset-look">↻ Reset adjustments</button><span>D · focus</span></div>
+      <div id="ocean-controls" hidden></div>
+    </aside>
+
+    <footer id="transport" class="timeline" role="group" aria-label="Artwork playback controls">
+      <div class="transport-buttons"><button id="playback" aria-label="Pause animation" aria-pressed="false"><span class="pause-icon">Ⅱ</span><span class="play-icon">▷</span></button><button id="replay" aria-label="Restart animation" title="Restart">↻</button></div>
+      <div class="timeline-track"><div class="timeline-labels"><output id="time-label">0.00 s</output><span>SPACE TO PLAY / PAUSE</span><span id="duration-label">24 s</span></div><input id="seek" aria-label="Animation timeline" type="range" min="0" max="24" step=".01" value="0"/></div>
+      <label id="viewer-quality-control"><span class="sr-only">Rendering quality</span><select id="viewer-quality"><option value="fine">Fine</option><option value="light">Light</option></select></label>
+      <button id="pause" class="sr-only">Pause</button><span class="timeline-loop">↺<small>LIVE LOOP</small></span>
+    </footer>
+  </div>
+  <div id="viewer-tools"><button id="return-studio" title="Open ASCII Studio (D)">Studio</button><label><span class="sr-only">Choose artwork</span><select id="viewer-scene"><option value="stingray">Stingray</option><option value="lilies">Lilies</option><option value="skull">Space skull</option></select></label></div>
+  <div id="toast" role="status" aria-live="polite" hidden></div><p id="status" class="sr-only" aria-live="polite"></p>
+  <dialog id="projects-dialog" aria-labelledby="projects-title"><form method="dialog" class="dialog-close"><button aria-label="Close saved scenes">×</button></form><span class="eyebrow">YOUR COLLECTION</span><h1 id="projects-title">Saved scenes.</h1><p class="dialog-description">Pick up where you left off.</p><div id="project-dialog-list"></div></dialog>
+  <dialog id="export-dialog" aria-labelledby="export-title"><form method="dialog" class="dialog-close"><button aria-label="Close export">×</button></form><span class="eyebrow">TAKE IT WITH YOU</span><h1 id="export-title">Made to be shared.</h1><p class="dialog-description">Export just the artwork, exactly how you made it.</p>
+    <div class="export-formats"><button data-format="png" class="selected"><strong>PNG</strong><small>A single frame</small></button><button data-format="video"><strong>VIDEO</strong><small>A moving scene</small></button><button data-format="project"><strong>SCENE</strong><small>Keep it editable</small></button></div>
+    <div id="export-options"><label class="select-control">Output size<select id="export-size"><option value="1080">1080 px · Full HD</option><option value="720">720 px · Quick export</option><option value="1920">1920 px · High resolution</option></select></label><label id="video-duration-control" class="select-control" hidden>Clip length<select id="export-duration"><option value="5">5 seconds</option><option value="10" selected>10 seconds</option><option value="24">24 seconds · full skull turn</option><option value="30">30 seconds</option></select></label></div>
+    <p id="export-note" class="input-hint">A clean PNG of the current frame, without the editor.</p>
+    <div id="export-progress" hidden><progress max="100" value="0"></progress><span id="export-progress-text">Getting ready…</span></div>
+    <div class="dialog-actions"><button id="cancel-export" class="secondary">Cancel</button><button id="start-export" class="primary">Download PNG ↗</button></div>
+  </dialog>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>
