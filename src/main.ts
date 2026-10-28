@@ -19,7 +19,7 @@ const scenes: Scene[] = ['lilies', 'stingray', 'skull'];
 const descriptions: Record<Scene, string> = {
   lilies: 'An animated ASCII bouquet of colourful lilies',
   stingray: 'A luminous mythical ASCII stingray swimming through a dark ocean, with flapping fins, an undulating tail, moving water and drifting plankton',
-  skull: 'A three-dimensional human skull slowly rotating through a star field, with natural ivory bone, hollow sockets, a distant ringed planet and very occasional red laser fire',
+  skull: 'A three-dimensional human skull floating and rotating through deep space, with layered drifting stars, faint blue and violet nebula clouds, a distant ringed planet, a small moon and occasional red laser fire',
 };
 let savedScene: string | null = null;
 try { savedScene = localStorage.getItem('ascii-scene'); } catch { /* Storage is optional. */ }

@@ -2,7 +2,7 @@
 
 Three real-time artworks built with Vite, TypeScript and PixiJS:
 
-- **Space skull** — a natural anatomical human skull, with actual 3D rotation, hollow orbital and nasal cavities, individual teeth, cranial sutures and detailed bone shading. Sparse parallax stars and a ringed planet establish the space setting. A brief red laser burst fires from the eye sockets once per turn, about every 22 seconds at the default speed; otherwise the sockets remain empty.
+- **Space skull** — a natural anatomical human skull, with actual 3D rotation, hollow orbital and nasal cavities, individual teeth, cranial sutures and detailed bone shading. Four depths of parallax stars, faint blue/violet nebula clouds, a distant ringed planet and a small crescent moon establish the deep-space setting. The skull drifts slowly in three dimensions. A brief red laser burst fires from the eye sockets once per turn, about every 22 seconds at the default speed; otherwise the sockets remain empty.
 - **Stingray** — the original luminous procedural ray with rippling fins, an undulating tail, animated ocean caustics and drifting plankton.
 - **Lilies** — the original twelve-flower procedural bouquet, blooming over 4.2 seconds and holding when complete.
 
@@ -41,7 +41,7 @@ The skull uses [Human Skull](https://opengameart.org/content/human-skull-0), a h
 
 ## Rendering
 
-`src/skull.ts` renders the anatomical mesh with a real depth buffer, perspective, rotating surface normals, tangent-space bone relief, ambient occlusion and directional lighting. Red laser cylinders use the same 3D transformation and depth test, so they originate in the sockets and are occluded by bone. The star field and ringed planet are procedural shaders. All runtime assets are local.
+`src/skull.ts` renders the anatomical mesh with a real depth buffer, perspective, rotating surface normals, tangent-space bone relief, ambient occlusion and directional lighting. Red laser cylinders use the same 3D transformation and depth test, so they originate in the sockets and are occluded by bone. `src/space.ts` generates the layered star field, drifting nebula and shaded planets with shader math. Its star cores are sized to survive the ASCII character-grid sampling. All runtime assets are local.
 
 `src/ascii-filter.ts` applies the existing GPU ASCII treatment: a hand-drawn 5×7 glyph atlas, stable cell noise, source colour, contrast and gamma. Scene-specific exposure preserves the skull's natural shading while retaining the original stingray treatment. Fine uses 2.5×4 world-unit cells and a 2× display buffer; Light uses 3.5×5.6 cells and a 1× display buffer.
 

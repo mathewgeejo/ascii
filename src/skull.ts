@@ -1,6 +1,7 @@
 import { Assets, Buffer, BufferUsage, Geometry, GlProgram, Mesh, Shader, State, type Application, type Texture } from 'pixi.js';
 import type { Settings } from './config';
 import { ShaderScene } from './shader-scene';
+import { spaceFragment } from './space';
 import modelUrl from './assets/skull/mesh.bin?url';
 import colorUrl from './assets/skull/bone.jpg';
 import normalUrl from './assets/skull/normal.png';
@@ -8,50 +9,6 @@ import occlusionUrl from './assets/skull/occlusion.jpg';
 
 // Actual human-made anatomical geometry (CDmir, 2018, CC0), not primitive shapes
 // approximating a face. Reference/provenance is in assets/skull/LICENSE.md.
-const sky = `
-in vec2 vUV;
-out vec4 finalColor;
-uniform vec2 uSize;
-uniform float uTime;
-uniform float uParticles;
-float hash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-mat2 turn(float a) { float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
-void main() {
-  vec2 p=vUV*vec2(uSize.x/uSize.y,1.);
-  vec3 color=vec3(.0005,.0008,.0018);
-  vec2 fog=(p-vec2(.65,.46))*vec2(1.,1.8);
-  color+=vec3(.006,.009,.019)*exp(-dot(fog,fog)*5.);
-  for(int layer=0;layer<3;layer++) {
-    float l=float(layer),size=34.+l*23.;
-    vec2 gp=p*size+vec2(uTime*.018*uParticles*(1.+l),l*51.);
-    vec2 id=floor(gp),f=fract(gp)-.5;
-    vec2 q=f-(vec2(hash(id+13.),hash(id+57.))*.7-.35);
-    float star=exp(-dot(q,q)*(1200.+l*2400.));
-    star*=step(.947-l*.004,hash(id+79.));
-    color+=star*(.72+.25*sin(uTime*.5+hash(id+123.)*40.))*vec3(.50,.55,.63)*uParticles;
-    if(l<.5&&hash(id+79.)>.997) {
-      float spike=exp(-abs(q.x)*210.-abs(q.y)*16.)+exp(-abs(q.y)*210.-abs(q.x)*16.);
-      color+=spike*.22*vec3(.45,.52,.65)*uParticles;
-    }
-  }
-  vec2 planetUV=(vUV-vec2(.80,.22))*vec2(uSize.x/uSize.y,1.);
-  planetUV=turn(-.37)*planetUV;
-  float radius=.076,dist=length(planetUV);
-  float ring=length(planetUV/vec2(1.,.28));
-  float ringMask=smoothstep(.109,.113,ring)*(1.-smoothstep(.167,.173,ring));
-  float ringLines=.25+.75*pow(.5+.5*sin(ring*2200.),2.);
-  if(planetUV.y<0.)color+=ringMask*ringLines*vec3(.13,.15,.18);
-  if(dist<radius) {
-    vec3 n=vec3(planetUV/radius,sqrt(max(0.,1.-dist*dist/(radius*radius))));
-    float lit=.035+.45*max(0.,dot(n,normalize(vec3(-.7,-.4,.5))));
-    float bands=.83+.17*sin(planetUV.y*480.+sin(planetUV.x*60.)*.6);
-    color=vec3(.31,.40,.48)*lit*bands;
-    color+=vec3(.16,.25,.35)*pow(1.-n.z,5.)*.14;
-  }
-  if(planetUV.y>=0.)color+=ringMask*ringLines*vec3(.13,.15,.18);
-  finalColor=vec4(color,1.);
-}`;
-
 const transform = `
 uniform vec2 uSize;
 uniform float uTime;
@@ -65,7 +22,9 @@ vec3 orient(vec3 p) {
 }
 vec3 place(vec3 p) {
   p=orient(p);
-  p.y+=sin(uTime*.57)*.045*uMotion;
+  p.x+=sin(uTime*.22)*.055*uMotion;
+  p.y+=sin(uTime*.48)*.075*uMotion;
+  p.z+=sin(uTime*.19)*.045*uMotion;
   return p;
 }
 vec4 project(vec3 p) {
@@ -163,7 +122,7 @@ export class SpaceSkull extends ShaderScene {
   private beams?: Mesh<Geometry, Shader>;
   private loading?: Promise<void>;
 
-  constructor() { super(sky, 'skull-star-field'); }
+  constructor() { super(spaceFragment, 'skull-deep-space'); }
 
   load() { return this.loading ??= this.loadModel(); }
 
