@@ -38,10 +38,10 @@ export class Bouquet {
   readonly cellX: number;
   readonly cellY: number;
   private vertices: Vertex[] = Array.from({ length: 33 * 13 }, () => ({ x: 0, y: 0, z: 0, r: 0, g: 0, b: 0 }));
-  constructor(quality: 'fine' | 'light' = 'fine', private arrangement: Flower[] = flowers, glyphSize = 1) {
+  constructor(quality: 'fine' | 'light' = 'fine', private arrangement: Flower[] = flowers, glyphSize = 1, readonly width = WIDTH) {
     this.cellX = (quality === 'fine' ? 2.5 : 3.5) * glyphSize;
     this.cellY = (quality === 'fine' ? 4 : 5.6) * glyphSize;
-    this.cols = Math.ceil(WIDTH / this.cellX);
+    this.cols = Math.ceil(width / this.cellX);
     this.rows = Math.ceil(HEIGHT / this.cellY);
     const length = this.cols * this.rows;
     this.depth = new Float32Array(length);

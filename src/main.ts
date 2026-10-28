@@ -1,6 +1,6 @@
 import { Application, Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { Bouquet, WIDTH, HEIGHT, DURATION } from './bouquet';
-import { Knight } from './knight';
+import { Stingray } from './stingray';
 import { createAsciiFilter } from './ascii-filter';
 import { CONFIG, type Quality, type Scene } from './config';
 import './style.css';
@@ -11,21 +11,21 @@ const params = new URLSearchParams(location.search);
 const app = new Application();
 const artwork = new Container();
 const lilyLayer = new Container();
-const knight = new Knight();
+const stingray = new Stingray();
 const settings = { ...CONFIG };
 const ascii = createAsciiFilter();
-const scenes: Scene[] = ['lilies', 'knight', 'garden'];
+const scenes: Scene[] = ['lilies', 'stingray'];
 let savedScene: string | null = null;
 try { savedScene = localStorage.getItem('ascii-scene'); } catch { /* Storage is optional. */ }
 let scene: Scene = scenes.includes(params.get('scene') as Scene) ? params.get('scene') as Scene
-  : scenes.includes(savedScene as Scene) ? savedScene as Scene : 'knight';
+  : scenes.includes(savedScene as Scene) ? savedScene as Scene : 'stingray';
 let quality: Quality = params.get('quality') === 'light' ? 'light' : 'fine';
 let bouquet = new Bouquet(quality);
 const sprites: Sprite[] = [];
 let visibleGlyphs = 0;
-let knightSprite: Sprite;
+let raySprite: Sprite;
 let time = scene === 'lilies' && reducedMotion.matches ? DURATION : 0;
-const clocks: Record<Scene, number> = { lilies: reducedMotion.matches ? DURATION : 0, knight: 0, garden: 0 };
+const clocks: Record<Scene, number> = { lilies: reducedMotion.matches ? DURATION : 0, stingray: 0 };
 let paused = false;
 let last = 0;
 let request = 0;
@@ -89,7 +89,10 @@ function updateUI(force = false) {
 
 function draw() {
   if (scene === 'lilies') drawLilies();
-  else { knight.render(time, scene === 'garden', settings); knightSprite.texture.source.update(); }
+  else {
+    stingray.render(app,time,settings);
+    ascii.filter.resources.ascii.uniforms.uTime = time;
+  }
   app.render(); renderedFrames++; updateUI();
 }
 
@@ -123,52 +126,63 @@ function seek(value: number) {
 function resize() {
   if (!ready) return;
   app.renderer.resize(innerWidth, innerHeight);
-  const scale = Math.min((innerWidth - 24) / WIDTH, (innerHeight - 96) / HEIGHT) * settings.scale;
-  artwork.scale.set(scale);
-  artwork.position.set((innerWidth - WIDTH * scale) / 2, (innerHeight - HEIGHT * scale) / 2 + 2);
-  app.render();
+  if (scene === 'stingray') {
+    const width = Math.round(innerWidth / innerHeight * 1000);
+    stingray.resize(width,1000,quality);
+    raySprite.width = width; raySprite.height = 1000;
+    ascii.filter.resources.ascii.uniforms.uSceneSize[0] = width;
+    ascii.filter.resources.ascii.uniforms.uSceneSize[1] = 1000;
+    artwork.scale.set(innerHeight / 1000);
+    artwork.position.set(0,0);
+  } else {
+    const scale = Math.min((innerWidth - 24) / WIDTH, (innerHeight - 96) / HEIGHT) * settings.scale;
+    artwork.scale.set(scale);
+    artwork.position.set((innerWidth - WIDTH * scale)/2,(innerHeight-HEIGHT*scale)/2+2);
+  }
+  draw();
 }
 
 function setScene(next: Scene, remember = true) {
   stop(); clocks[scene] = time; scene = next; time = clocks[scene];
   if (scene === 'lilies' && reducedMotion.matches) time = DURATION;
   paused = false; lastUiUpdate = -1;
-  lilyLayer.visible = scene === 'lilies'; knightSprite.visible = scene !== 'lilies';
-  if (scene === 'garden') knight.configureGarden(quality, settings.glyphSize);
+  lilyLayer.visible = scene === 'lilies'; raySprite.visible = scene === 'stingray';
+  if (scene === 'lilies') ensurePool();
   $('#stage').setAttribute('aria-label', scene === 'lilies' ? 'An animated ASCII bouquet of colourful lilies'
-    : scene === 'garden' ? 'A bowed ASCII knight holding an upright sword in a colourful bed of lilies, with a red scarf moving in the wind'
-      : 'A bowed armoured ASCII knight holding an upright sword, with a crimson scarf moving in the wind and dark grass below');
+    : 'A luminous mythical ASCII stingray swimming through a dark ocean, with flapping fins, an undulating tail, moving water and drifting plankton');
   $<HTMLSelectElement>('#scene').value = scene;
   $<HTMLInputElement>('#seek').max = scene === 'lilies' ? String(DURATION) : '24';
   $<HTMLInputElement>('#source').disabled = scene === 'lilies';
-  $('#knight-controls').hidden = scene === 'lilies';
-  $('#replay').setAttribute('aria-label', scene === 'lilies' ? 'Replay bouquet blooming' : 'Restart wind animation');
+  $('#ocean-controls').hidden = scene === 'lilies';
+  $('#replay').setAttribute('aria-label', scene === 'lilies' ? 'Replay bouquet blooming' : 'Restart swimming animation');
   if (remember) {
     try { localStorage.setItem('ascii-scene', scene); } catch { /* Optional. */ }
     const url = new URL(location.href); url.searchParams.set('scene', scene); url.searchParams.delete('t');
     history.replaceState(null, '', url);
   }
-  $('#status').textContent = scene === 'lilies' ? 'Lilies selected.' : scene === 'garden' ? 'Knight in lilies selected.' : 'Knight selected.';
-  draw(); updateUI(true); play();
+  $('#status').textContent = scene === 'lilies' ? 'Lilies selected.' : 'Stingray selected.';
+  resize(); updateUI(true); play();
 }
 
 function configureQuality() {
   bouquet = new Bouquet(quality, undefined, settings.glyphSize);
   for (const sprite of sprites) sprite.visible = false;
-  ensurePool(); ascii.configure(settings, quality);
-  if (scene === 'garden') knight.configureGarden(quality, settings.glyphSize);
+  if (scene === 'lilies') ensurePool();
+  app.renderer.resolution = quality === 'fine' ? 2 : 1;
+  ascii.configure(settings, quality);
   $<HTMLSelectElement>('#quality').value = quality; $<HTMLSelectElement>('#quick-quality').value = quality;
-  draw();
+  resize();
 }
 
 async function init() {
   await app.init({ background: '#000000', width: innerWidth, height: innerHeight, antialias: false,
-    resolution: Math.min(devicePixelRatio, 2), autoDensity: true, autoStart: false, preference: 'webgl' });
-  await knight.init();
-  knightSprite = new Sprite(Texture.from(knight.canvas)); knightSprite.eventMode = 'none'; knightSprite.filters = sourceFilter;
-  artwork.addChild(lilyLayer, knightSprite); app.stage.addChild(artwork);
+    resolution: quality === 'fine' ? 2 : 1, autoDensity: true, autoStart: false, preference: 'webgl' });
+  raySprite = new Sprite(stingray.texture); raySprite.eventMode = 'none';
+  ascii.filter.resources.uSource = stingray.texture.source;
+  raySprite.filters = sourceFilter;
+  artwork.addChild(lilyLayer, raySprite); app.stage.addChild(artwork);
   $('#stage').appendChild(app.canvas); app.canvas.setAttribute('aria-hidden', 'true');
-  ready = true; ensurePool(); ascii.configure(settings, quality); resize(); setScene(scene, false);
+  ready = true; ascii.configure(settings, quality); setScene(scene, false);
   $('#scene').addEventListener('change', e => setScene((e.target as HTMLSelectElement).value as Scene));
   $('#replay').addEventListener('click', replay); $('#pause').addEventListener('click', togglePause);
   $('#playback').addEventListener('click', togglePause);
@@ -179,19 +193,25 @@ async function init() {
   $<HTMLSelectElement>('#quality').value = quality; $<HTMLSelectElement>('#quick-quality').value = quality;
   for (const [id, key] of [
     ['density', 'density'], ['glyph-size', 'glyphSize'], ['spacing', 'spacing'], ['contrast', 'contrast'],
-    ['gamma', 'gamma'], ['scarf-speed', 'scarfSpeed'], ['scarf-amplitude', 'scarfAmplitude'], ['grass', 'grassMotion'],
-  ] as const) $("#" + id).addEventListener('input', e => {
+    ['gamma', 'gamma'], ['swim-speed', 'swimSpeed'], ['fin-amplitude', 'finAmplitude'],
+    ['tail-amplitude', 'tailAmplitude'], ['water', 'water'], ['glow', 'glow'],
+  ] as const) {
+    $<HTMLInputElement>("#" + id).value = String(settings[key]);
+    $("#" + id).addEventListener('input', e => {
     settings[key] = Number((e.target as HTMLInputElement).value);
     if (key === 'glyphSize') configureQuality(); else { ascii.configure(settings, quality); draw(); }
   });
+  }
   $('#source').addEventListener('change', e => {
     settings.source = (e.target as HTMLInputElement).checked;
-    knightSprite.filters = settings.source ? null : sourceFilter; draw();
+    ascii.configure(settings,quality); draw();
   });
   $('#close-dev').addEventListener('click', () => { $('#dev').hidden = true; });
   document.addEventListener('keydown', event => {
+    if (event.key.toLowerCase() === 'd' && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault(); $('#dev').hidden = !$('#dev').hidden; return;
+    }
     if ((event.target as HTMLElement).matches('input, select, button')) return;
-    if (event.key.toLowerCase() === 'd') $('#dev').hidden = !$('#dev').hidden;
     if (event.code === 'Space') { event.preventDefault(); togglePause(); }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else play(); });
