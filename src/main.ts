@@ -125,6 +125,9 @@ function seek(value: number) {
 
 function resize() {
   if (!ready) return;
+  // Filter inputs are pooled; release the previous framebuffer binding before a resize.
+  ascii.filter.resources.uTexture = Texture.WHITE.source;
+  ascii.filter.resources.uSampler = Texture.WHITE.source.style;
   app.renderer.resize(innerWidth, innerHeight);
   if (scene === 'stingray') {
     const width = Math.round(innerWidth / innerHeight * 1000);

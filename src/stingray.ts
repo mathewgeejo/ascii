@@ -27,6 +27,7 @@ vec3 surface(vec2 uv) {
   float angle = sin(phase) * .56 * uAmplitude;
   x = sign(x) * (min(abs(x),68.) + outer * cos(angle));
   float y = -190. + t * 395. + pow(abs(s),1.7) * (48. + sin(phase - .5) * 22. * uAmplitude);
+  y += exp(-t*20.) * s*s * 25.;
   y += pow(abs(s),3.) * sin(t * 37.) * 3.;
   float dome = 50. * exp(-pow(x / 89.,2.)) * pow(max(.001,sin(t * 3.14159)),.65);
   float z = dome + outer * sin(angle);
@@ -76,22 +77,24 @@ void main() {
   float light = .23 + .77 * max(0.,dot(n,normalize(vec3(-.25,-.5,1.))));
   float ribs = pow(.5 + .5 * sin(t * 92. + pow(s,.65) * 17.),18.);
   float ridge = exp(-pow(vLocal.x / 25.,2.));
-  vec3 skin = mix(vec3(.025,.10,.19),vec3(.17,.40,.53),light);
-  skin = mix(skin,vec3(.29,.26,.49),pow(s,.6) * .46);
+  vec3 skin = mix(vec3(.012,.035,.095),vec3(.25,.44,.61),pow(light,1.65));
+  skin = mix(skin,vec3(.20,.13,.37),pow(s,.6) * .32);
   skin += vec3(.055,.085,.09) * ridge;
-  skin *= .67 + .33 * light;
+  skin *= .38 + .62 * light;
   skin += ribs * smoothstep(.19,.85,s) * vec3(.025,.07,.08);
   float grain = hash(floor(vUV * vec2(230.,180.)));
   skin *= .87 + grain * .24;
   // Fine luminous spots and concentric tracery are attached to the skin's UVs.
   vec2 grid = vUV * vec2(49.,38.);
   vec2 id = floor(grid), q = fract(grid) - .5;
-  float spot = exp(-dot(q,q) * 170.) * step(.29,hash(id));
+  float spot = exp(-dot(q,q) * 80.) * step(.29,hash(id));
   spot *= smoothstep(.15,.55,s) * (1. - smoothstep(.86,1.,s));
   float rings = pow(max(0.,cos(length(vec2(vLocal.x * .011,(t-.23)*7.)) * 16. + s * 3.)),26.);
-  rings *= smoothstep(.2,.7,s) * .11;
+  rings *= smoothstep(.2,.7,s) * .30;
   float edge = smoothstep(.975,1.,s) + (1.-smoothstep(.006,.022,t)) * .4;
-  skin += uGlow * (spot * vec3(.26,.72,.72) + rings * vec3(.15,.53,.6));
+  skin += uGlow * (spot * vec3(.35,.85,.86) + rings * vec3(.24,.57,.67));
+  float pearl = pow(max(0.,dot(n,normalize(vec3(.1,-.3,1.)))),28.);
+  skin += pearl * vec3(.09,.08,.13) * (1.-smoothstep(.45,.9,s));
   skin += edge * uGlow * vec3(.08,.39,.43);
   // Eyes have raised sockets, pale irises, and dark pupils rather than flat dots.
   vec2 eye = vec2((abs(vLocal.x)-42.)/11., (t-.21)/.033);
@@ -145,7 +148,7 @@ function mesh(rows: number, columns: number, part: number) {
 }
 
 export class Stingray {
-  readonly texture = RenderTexture.create({ width: 1200, height: 1000, resolution: 1 });
+  readonly texture = RenderTexture.create({ width: 1200, height: 1000, resolution: 1, dynamic: true });
   private source = new Container();
   private body = mesh(94,116,0);
   private tail = mesh(190,8,1);
@@ -155,8 +158,7 @@ export class Stingray {
 
   resize(width: number, height: number, quality: Quality) {
     this.width = width; this.height = height;
-    this.texture.source.resolution = quality === 'fine' ? 1 : .65;
-    this.texture.resize(width,height);
+    this.texture.resize(width,height,quality === 'fine' ? 1 : .65);
     for (const item of [this.body,this.tail]) {
       item.shader!.resources.ray.uniforms.uSize[0] = width;
       item.shader!.resources.ray.uniforms.uSize[1] = height;
